@@ -1,0 +1,17 @@
+# Dependencies and Netlify build state
+node_modules/
+.netlify/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+private_key.txt
+*.jks
+android-signing.properties
+issued_licences.csv
+
+# macOS metadata and editor files
+.DS_Store
+*.swp
+*.swo

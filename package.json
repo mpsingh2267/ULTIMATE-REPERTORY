@@ -1,0 +1,17 @@
+{
+  "name": "ultimate-repertory-licensing",
+  "version": "1.0.0",
+  "description": "Netlify licensing + update portal for Ultimate Repertory",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@noble/ed25519": "^2.1.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^18.0.0"
+  }
+}

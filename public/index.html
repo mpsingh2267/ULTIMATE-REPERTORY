@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultimate Repertory — Licence Manager</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal: #087866;
+      --teal-dark: #055a4d;
+      --teal-light: #e8f5f2;
+      --amber: #b37c00;
+      --red: #b3261e;
+      --bg: #f5faf9;
+      --card: #ffffff;
+      --text: #1a2421;
+      --muted: #566b67;
+      --border: #d0e5e0;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(8,120,102,0.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+      color: #fff;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 12px rgba(5,90,77,0.25);
+    }
+    header svg { width: 42px; height: 42px; flex-shrink: 0; }
+    header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.5px; }
+    header p  { font-size: 0.875rem; opacity: 0.85; margin-top: 2px; }
+
+    /* Auth banner */
+    #auth-banner {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin: 24px 40px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+    #auth-banner.hidden { display: none; }
+
+    /* Main grid */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 24px 40px 40px;
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+    @media (max-width: 780px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+      header { padding: 18px 20px; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .icon { font-size: 1.2rem; }
+
+    /* Form */
+    label { display: block; font-size: 0.84rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.95rem;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(8,120,102,0.12);
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .field { margin-bottom: 0; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 20px;
+      border-radius: 9px;
+      font-size: 0.93rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .18s;
+    }
+    .btn-primary {
+      background: var(--teal);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,120,102,0.25); }
+    .btn-secondary {
+      background: var(--teal-light);
+      color: var(--teal);
+    }
+    .btn-secondary:hover { background: #cde8e2; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Result box */
+    .result-box {
+      background: var(--teal-light);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      font-size: 0.87rem;
+      display: none;
+    }
+    .result-box.show { display: block; }
+    .result-box.error { background: #fde8e8; border-color: #e8b0ae; }
+    .result-box .key-display {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      word-break: break-all;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .result-box .key-display:hover { background: #f0faf7; }
+    .copy-hint { font-size: 0.75rem; color: var(--muted); }
+
+    /* Version editor */
+    .version-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 480px) { .version-grid { grid-template-columns: 1fr; } }
+
+    /* Log table */
+    .log-table-wrap { overflow-x: auto; margin-top: 8px; max-height: 320px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--teal-light); font-weight: 700; color: var(--teal); position: sticky; top: 0; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f5fefb; }
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .badge-full { background: #d4f4ec; color: #065c48; }
+    .badge-trial { background: #fff0c2; color: #7a5200; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255,255,255,0.5);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Secret input */
+    .secret-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    .secret-row input { margin-bottom: 0; }
+    .secret-row .btn { white-space: nowrap; padding: 10px 14px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="32" r="32" fill="rgba(255,255,255,0.15)"/>
+    <path d="M20 44L32 20L44 44" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M23 38H41" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="32" cy="32" r="4" fill="white" opacity="0.7"/>
+  </svg>
+  <div>
+    <h1>Ultimate Repertory — Licence Manager</h1>
+    <p>Owner-only portal · Generate, validate &amp; manage license keys</p>
+  </div>
+</header>
+
+<div id="auth-banner">
+  🔐 <span>Enter your <strong>Admin Secret</strong> below to unlock key generation. The secret is the <code>ADMIN_SECRET</code> environment variable set on Netlify.</span>
+</div>
+
+<main>
+
+  <!-- ──────────────────────────────────────────────── -->
+  <!-- Card 1: Generate License Key                     -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div class="card">
+    <h2><span class="icon">🔑</span> Generate License Key</h2>
+
+    <label for="admin-secret">Admin Secret</label>
+    <div class="secret-row">
+      <input type="password" id="admin-secret" placeholder="Paste your ADMIN_SECRET here…" autocomplete="off" />
+      <button class="btn btn-secondary" onclick="saveSecret()" title="Save for session">Save</button>
+    </div>
+
+    <label for="device-code">Device Code (from app — e.g. AABBCC-DDEEFF-112233-445566)</label>
+    <input type="text" id="device-code" placeholder="e.g. AABBCC-DDEEFF-112233-445566" />
+
+    <label for="edition">Edition</label>
+    <select id="edition" onchange="toggleExpiry()">
+      <option value="trial">Trial (10-day)</option>
+      <option value="full">Full Access (Permanent)</option>
+    </select>
+
+    <div id="expiry-row">
+      <label>Trial duration</label>
+      <input type="text" value="10 days (fixed)" disabled />
+    </div>
+
+    <button id="gen-btn" class="btn btn-primary" onclick="generateKey()" style="width:100%">
+      Generate Key
+    </button>
+
+    <div id="gen-result" class="result-box"></div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────── -->
+  <!-- Card 2: Validate / Inspect a Key                 -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div class="card">
+    <h2><span class="icon">🔍</span> Validate License Key</h2>
+
+    <label for="val-device">Device Code</label>
+    <input type="text" id="val-device" placeholder="e.g. AABBCC-DDEEFF-112233-445566" />
+
+    <label for="val-key">License Key (base64)</label>
+    <textarea id="val-key" placeholder="Paste the key here…" rows="4"></textarea>
+
+    <button class="btn btn-secondary" onclick="validateKey()" style="width:100%">
+      Validate Key
+    </button>
+
+    <div id="val-result" class="result-box"></div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────── -->
+  <!-- Card 3: Update version.json                      -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">🚀</span> Publish App Update</h2>
+    <p style="font-size:0.87rem; color:var(--muted); margin-bottom:18px;">
+      Edit the fields below and click <strong>Save version.json</strong>. The app polls this feed on every launch.
+      The file is saved as <code>public/updates/version.json</code> in this repository — <em>commit and push to deploy</em>.
+    </p>
+
+    <div class="version-grid">
+      <div>
+        <label for="v-version">Version string</label>
+        <input type="text" id="v-version" value="2.5.1" />
+      </div>
+      <div>
+        <label for="v-build">Build number (integer)</label>
+        <input type="number" id="v-build" value="51" />
+      </div>
+      <div>
+        <label for="v-date">Release date</label>
+        <input type="date" id="v-date" />
+      </div>
+    </div>
+
+    <label for="v-changelog">Changelog (one entry per line)</label>
+    <textarea id="v-changelog" rows="5" placeholder="New feature&#10;Bug fix…"></textarea>
+
+    <div class="version-grid">
+      <div>
+        <label for="v-mac">macOS download URL</label>
+        <input type="url" id="v-mac" placeholder="https://…dmg" />
+      </div>
+      <div>
+        <label for="v-win">Windows download URL</label>
+        <input type="url" id="v-win" placeholder="https://…exe" />
+      </div>
+      <div>
+        <label for="v-android">Android download URL</label>
+        <input type="url" id="v-android" placeholder="https://….apk" />
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:4px;">
+      <button class="btn btn-primary" onclick="buildVersionJson()">📄 Preview JSON</button>
+      <button class="btn btn-secondary" onclick="copyVersionJson()">📋 Copy JSON</button>
+    </div>
+
+    <div id="version-result" class="result-box"></div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────── -->
+  <!-- Card 4: Recent issue log (localStorage)          -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2 style="justify-content:space-between;">
+      <span><span class="icon">📋</span> Key Issue Log (this browser)</span>
+      <button class="btn btn-secondary" onclick="clearLog()" style="font-size:0.8rem;padding:5px 12px;">Clear</button>
+    </h2>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:12px;">
+      Stored locally in browser — not synced to server. Export and save manually after each session.
+    </p>
+    <div class="log-table-wrap">
+      <table id="log-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Device ID</th>
+            <th>Edition</th>
+            <th>Expires</th>
+            <th>Key (first 24 chars)</th>
+          </tr>
+        </thead>
+        <tbody id="log-body">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No keys generated yet in this session.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-secondary" onclick="exportLog()">⬇ Export log as CSV</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ──────────────── Helpers ──────────────────────────
+  let _adminSecret = sessionStorage.getItem('adminSecret') || '';
+  const API_BASE = window.location.origin + '/api';
+
+  function saveSecret() {
+    _adminSecret = document.getElementById('admin-secret').value.trim();
+    sessionStorage.setItem('adminSecret', _adminSecret);
+    document.getElementById('auth-banner').classList.add('hidden');
+    alert('Secret saved for this browser session.');
+  }
+
+  function showResult(id, html, isError = false) {
+    const el = document.getElementById(id);
+    el.innerHTML = html;
+    el.className = 'result-box show' + (isError ? ' error' : '');
+  }
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Copied to clipboard!');
+    });
+  }
+
+  function toggleExpiry() {
+    const ed = document.getElementById('edition').value;
+    document.getElementById('expiry-row').style.display = ed === 'trial' ? '' : 'none';
+  }
+  toggleExpiry();
+
+  // ──────────────── Generate Key ─────────────────────
+  async function generateKey() {
+    const secret = _adminSecret || document.getElementById('admin-secret').value.trim();
+    if (!secret) { alert('Enter and save the Admin Secret first.'); return; }
+
+    const deviceCode = document.getElementById('device-code').value.trim();
+    if (!deviceCode) { alert('Device Code is required.'); return; }
+
+    const edition = document.getElementById('edition').value;
+    const expiryDays = 10;
+
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating…';
+
+    try {
+      const res = await fetch(`${API_BASE}/generate-license`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${secret}`,
+        },
+        body: JSON.stringify({ deviceCode, edition, expiryDays }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        showResult('gen-result', `❌ Error: ${data.error || res.statusText}`, true);
+      } else {
+        showResult('gen-result', `
+          <strong style="color:var(--teal)">✅ Key generated!</strong><br>
+          <small style="color:var(--muted)">Device: <code>${data.deviceCode}</code> &nbsp;·&nbsp; Edition: <strong>${data.edition}</strong> &nbsp;·&nbsp; Expires: <strong>${data.expiresAt || 'PERMANENT'}</strong></small>
+          <div class="key-display" onclick="copyText('${data.key}')" title="Click to copy">${data.key}</div>
+          <span class="copy-hint">👆 Click the key to copy it to clipboard.</span>
+        `);
+        appendLog(deviceCode, edition, data.expiresAt || 'PERMANENT', data.key);
+      }
+    } catch (e) {
+      showResult('gen-result', `❌ Network error: ${e.message}`, true);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Generate Key';
+    }
+  }
+
+  // ──────────────── Validate Key ─────────────────────
+  async function validateKey() {
+    const deviceCode = document.getElementById('val-device').value.trim();
+    const key = document.getElementById('val-key').value.trim();
+    if (!deviceCode || !key) { alert('Device Code and Key are required.'); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/validate-license`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceCode, key }),
+      });
+      const data = await res.json();
+
+      if (data.valid) {
+        showResult('val-result', `
+          ✅ <strong>Valid key!</strong><br>
+          Edition: <strong>${data.edition}</strong> &nbsp;·&nbsp;
+          Expires: <strong>${data.expiresAt}</strong>
+        `);
+      } else {
+        showResult('val-result', `❌ Invalid key: ${data.error || 'Signature mismatch'}`, true);
+      }
+    } catch (e) {
+      showResult('val-result', `❌ Network error: ${e.message}`, true);
+    }
+  }
+
+  // ──────────────── Version JSON ─────────────────────
+  function buildVersionJsonObject() {
+    const changelog = document.getElementById('v-changelog').value
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    return {
+      version: document.getElementById('v-version').value.trim(),
+      buildNumber: parseInt(document.getElementById('v-build').value) || 0,
+      releaseDate: document.getElementById('v-date').value || new Date().toISOString().slice(0, 10),
+      changelog,
+      downloads: {
+        macos: document.getElementById('v-mac').value.trim(),
+        windows: document.getElementById('v-win').value.trim(),
+        android: document.getElementById('v-android').value.trim(),
+      },
+    };
+  }
+
+  function buildVersionJson() {
+    const obj = buildVersionJsonObject();
+    const json = JSON.stringify(obj, null, 2);
+    showResult('version-result', `
+      <strong>version.json preview</strong> — save this to <code>public/updates/version.json</code> and deploy:
+      <div class="key-display" onclick="copyText(\`${json.replace(/`/g, "'")}\`)" style="white-space:pre;font-size:0.75rem">${json}</div>
+      <span class="copy-hint">👆 Click to copy JSON.</span>
+    `);
+  }
+
+  function copyVersionJson() {
+    const obj = buildVersionJsonObject();
+    copyText(JSON.stringify(obj, null, 2));
+  }
+
+  // ──────────────── Issue Log ─────────────────────────
+  let _log = JSON.parse(localStorage.getItem('keyLog') || '[]');
+
+  function appendLog(deviceId, edition, expires, key) {
+    const entry = {
+      date: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      deviceId,
+      edition,
+      expires,
+      keyPreview: key.slice(0, 24) + '…',
+    };
+    _log.unshift(entry);
+    localStorage.setItem('keyLog', JSON.stringify(_log.slice(0, 200)));
+    renderLog();
+  }
+
+  function renderLog() {
+    const tbody = document.getElementById('log-body');
+    if (_log.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No keys generated yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = _log.map(e => `
+      <tr>
+        <td>${e.date}</td>
+        <td style="font-family:monospace;font-size:0.78rem">${e.deviceId}</td>
+        <td><span class="badge badge-${e.edition}">${e.edition}</span></td>
+        <td>${e.expires}</td>
+        <td style="font-family:monospace;font-size:0.76rem">${e.keyPreview}</td>
+      </tr>`).join('');
+  }
+
+  function clearLog() {
+    if (!confirm('Clear the local key log?')) return;
+    _log = [];
+    localStorage.removeItem('keyLog');
+    renderLog();
+  }
+
+  function exportLog() {
+    const rows = [['Date', 'Device ID', 'Edition', 'Expires', 'Key Preview']];
+    _log.forEach(e => rows.push([e.date, e.deviceId, e.edition, e.expires, e.keyPreview]));
+    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = `license-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  }
+
+  // ──────────────── Init ─────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    // Set default release date to today
+    document.getElementById('v-date').value = new Date().toISOString().slice(0, 10);
+    // Show auth banner if no secret
+    if (!_adminSecret) {
+      document.getElementById('auth-banner').classList.remove('hidden');
+    }
+    renderLog();
+  });
+</script>
+</body>
+</html>

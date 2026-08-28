@@ -1,0 +1,31 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/updates/version.json"
+  [headers.values]
+    Cache-Control = "no-cache, no-store"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/:splat"
+  status = 200
+
+[dev]
+  port = 8888
+  framework = "#custom"
+  command = "echo ready"
+  targetPort = 8888

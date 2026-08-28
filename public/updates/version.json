@@ -1,0 +1,17 @@
+{
+  "version": "2.5.1",
+  "buildNumber": 51,
+  "releaseDate": "2026-08-29",
+  "changelog": [
+    "Auto-update system linked to this portal",
+    "Persistent highlight and bold modes in Materia Medica",
+    "Patient case search and document attachments",
+    "Trial / Full licence management with in-app upgrade dialog",
+    "Windows & Android build support",
+    "License status badge in app toolbar"
+  ],
+  "downloads": {
+    "macos": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.1-10-Day-Trial-Universal-Mac.pkg",
+    "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.1-10-Day-Trial-Android-Tablet-Universal.apk"
+  }
+}
