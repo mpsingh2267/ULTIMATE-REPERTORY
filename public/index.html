@@ -220,12 +220,12 @@
   </svg>
   <div>
     <h1>Ultimate Repertory — Licence Manager</h1>
-    <p>Owner-only portal · Generate, validate &amp; manage license keys</p>
+    <p>Generate, validate &amp; manage license keys</p>
   </div>
 </header>
 
 <div id="auth-banner">
-  🔐 <span>Enter your <strong>Admin Secret</strong> below to unlock key generation. The secret is the <code>ADMIN_SECRET</code> environment variable set on Netlify.</span>
+  ⚠️ <span><strong>No login is enabled.</strong> Anyone who knows this portal URL can generate trial or permanent full licence keys.</span>
 </div>
 
 <main>
@@ -235,12 +235,6 @@
   <!-- ──────────────────────────────────────────────── -->
   <div class="card">
     <h2><span class="icon">🔑</span> Generate License Key</h2>
-
-    <label for="admin-secret">Admin Secret</label>
-    <div class="secret-row">
-      <input type="password" id="admin-secret" placeholder="Paste your ADMIN_SECRET here…" autocomplete="off" />
-      <button class="btn btn-secondary" onclick="saveSecret()" title="Save for session">Save</button>
-    </div>
 
     <label for="device-code">Device Code (from app — e.g. AABBCC-DDEEFF-112233-445566)</label>
     <input type="text" id="device-code" placeholder="e.g. AABBCC-DDEEFF-112233-445566" />
@@ -369,15 +363,7 @@
 
 <script>
   // ──────────────── Helpers ──────────────────────────
-  let _adminSecret = sessionStorage.getItem('adminSecret') || '';
   const API_BASE = window.location.origin + '/api';
-
-  function saveSecret() {
-    _adminSecret = document.getElementById('admin-secret').value.trim();
-    sessionStorage.setItem('adminSecret', _adminSecret);
-    document.getElementById('auth-banner').classList.add('hidden');
-    alert('Secret saved for this browser session.');
-  }
 
   function showResult(id, html, isError = false) {
     const el = document.getElementById(id);
@@ -399,9 +385,6 @@
 
   // ──────────────── Generate Key ─────────────────────
   async function generateKey() {
-    const secret = _adminSecret || document.getElementById('admin-secret').value.trim();
-    if (!secret) { alert('Enter and save the Admin Secret first.'); return; }
-
     const deviceCode = document.getElementById('device-code').value.trim();
     if (!deviceCode) { alert('Device Code is required.'); return; }
 
@@ -415,10 +398,7 @@
     try {
       const res = await fetch(`${API_BASE}/generate-license`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${secret}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceCode, edition, expiryDays }),
       });
       const data = await res.json();
@@ -555,10 +535,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     // Set default release date to today
     document.getElementById('v-date').value = new Date().toISOString().slice(0, 10);
-    // Show auth banner if no secret
-    if (!_adminSecret) {
-      document.getElementById('auth-banner').classList.remove('hidden');
-    }
     renderLog();
   });
 </script>

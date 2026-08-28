@@ -30,9 +30,12 @@ private_key.txt, android_trial_release.jks, or android-signing.properties.
 
 1. Keep this repository private.
 2. Import this folder as a Netlify site.
-3. Set ADMIN_SECRET to a long random owner password.
-4. Set PRIVATE_KEY_HEX using the command above.
-5. Deploy. The included netlify.toml configures the public site and functions.
+3. Set PRIVATE_KEY_HEX using the command above.
+4. Deploy. The included netlify.toml configures the public site and functions.
+
+WARNING: This version intentionally has no Admin Secret or login. Anyone who
+discovers the deployed portal URL can generate both trial and permanent full
+licence keys. Keep the URL private or enable Netlify access controls.
 
 The dashboard accepts the four-part device code displayed by the app. Choose
 Trial or Full and send the generated UR1 key to the customer.
@@ -42,7 +45,6 @@ Trial or Full and send the generated UR1 key to the customer.
 Generate a key:
 
     POST /api/generate-license
-    Authorization: Bearer ADMIN_SECRET
     {"deviceCode":"AABBCC-DDEEFF-112233-445566","edition":"trial"}
 
 Validate a key:

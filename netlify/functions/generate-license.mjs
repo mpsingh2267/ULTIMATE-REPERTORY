@@ -1,8 +1,7 @@
 /**
- * Netlify Function: generate-license (ADMIN / OWNER ONLY)
+ * Netlify Function: generate-license
  *
  * POST /api/generate-license
- * Headers: { "Authorization": "Bearer <ADMIN_SECRET>" }
  * Body:
  *   {
  *     "deviceCode": "AABBCC-DDEEFF-112233-445566",  // 4×6 hex groups from the app
@@ -19,7 +18,7 @@
  * JSON payload fields:
  *   { licenseId, edition, deviceCode, issuedAt (ISO), expiresAt (ISO|null) }
  *
- * ADMIN_SECRET and PRIVATE_KEY_HEX must be set as Netlify environment variables.
+ * PRIVATE_KEY_HEX must be set as a Netlify environment variable.
  * PRIVATE_KEY_HEX: first 32 bytes = Ed25519 seed in hex (64 hex chars minimum).
  */
 
@@ -39,7 +38,7 @@ const b64url = (bytes) =>
 export const handler = async (event) => {
   const cors = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type',
   };
 
   if (event.httpMethod === 'OPTIONS') {
@@ -48,13 +47,6 @@ export const handler = async (event) => {
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: cors, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  // Authenticate admin caller
-  const authHeader = event.headers['authorization'] ?? '';
-  const adminSecret = process.env.ADMIN_SECRET ?? '';
-  if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
-    return { statusCode: 401, headers: cors, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
   // Load private key seed (first 32 bytes)
