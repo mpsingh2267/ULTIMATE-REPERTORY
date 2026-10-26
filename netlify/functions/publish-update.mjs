@@ -112,12 +112,27 @@ export const handler = async (event) => {
       // Ignore if unavailable
     }
 
+    // Ensure compatibility fields for Flutter customerTrialUpdateUrl:
+    downloads.macos_trial = downloads.macos_trial || downloads.macos;
+    downloads.windows_trial = downloads.windows_trial || downloads.windows;
+    downloads.android_trial = downloads.android_trial || downloads.android;
+
     const versionFeed = {
       version,
       buildNumber,
+      edition: 'trial',
       releaseDate,
       changelog,
       downloads,
+      editions: {
+        trial: {
+          version,
+          buildNumber,
+          releaseDate,
+          changelog,
+          downloads: { ...downloads },
+        },
+      },
       revokedDevices: Array.from(devSet),
       revokedLicenses: Array.from(licSet),
       publishedAt: new Date().toISOString(),
@@ -129,6 +144,45 @@ export const handler = async (event) => {
         await store.set('version.json', JSON.stringify(versionFeed, null, 2));
       } catch (blobErr) {
         console.error('Failed to set in Blobs:', blobErr);
+      }
+    }
+
+    // Attempt to commit directly to GitHub repository if token is available
+    const token = (body.token || process.env.GITHUB_TOKEN || '').trim();
+    const repo = (body.repo || process.env.GITHUB_REPO || 'mpsingh2267/ULTIMATE-REPERTORY').trim();
+    if (token) {
+      try {
+        const ghPath = 'public/updates/version.json';
+        const ghUrl = `https://api.github.com/repos/${repo}/contents/${ghPath}`;
+        let sha = null;
+        const getRes = await fetch(ghUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'Ultimate-Repertory-Portal',
+          },
+        });
+        if (getRes.status === 200) {
+          const ghFile = await getRes.json();
+          sha = ghFile.sha;
+        }
+        const b64Content = Buffer.from(JSON.stringify(versionFeed, null, 2)).toString('base64');
+        await fetch(ghUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'Ultimate-Repertory-Portal',
+          },
+          body: JSON.stringify({
+            message: `Publish live update v${version} (Build ${buildNumber})`,
+            content: b64Content,
+            sha: sha || undefined,
+          }),
+        });
+      } catch (ghErr) {
+        console.error('Failed to commit version.json to GitHub:', ghErr);
       }
     }
 

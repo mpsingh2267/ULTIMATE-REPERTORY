@@ -705,15 +705,35 @@
   function buildVersionJsonObject() {
     const changelog = document.getElementById('v-changelog').value
       .split('\n').map(s => s.trim()).filter(Boolean);
+    const mac = document.getElementById('v-mac').value.trim();
+    const win = document.getElementById('v-win').value.trim();
+    const android = document.getElementById('v-android').value.trim();
+    const version = document.getElementById('v-version').value.trim();
+    const buildNumber = parseInt(document.getElementById('v-build').value, 10) || 0;
+    const releaseDate = document.getElementById('v-date').value || new Date().toISOString().slice(0, 10);
+    const downloads = {
+      macos: mac,
+      macos_trial: mac,
+      windows: win,
+      windows_trial: win,
+      android: android,
+      android_trial: android,
+    };
     return {
-      version: document.getElementById('v-version').value.trim(),
-      buildNumber: parseInt(document.getElementById('v-build').value, 10) || 0,
-      releaseDate: document.getElementById('v-date').value || new Date().toISOString().slice(0, 10),
+      version,
+      buildNumber,
+      edition: 'trial',
+      releaseDate,
       changelog,
-      downloads: {
-        macos: document.getElementById('v-mac').value.trim(),
-        windows: document.getElementById('v-win').value.trim(),
-        android: document.getElementById('v-android').value.trim(),
+      downloads,
+      editions: {
+        trial: {
+          version,
+          buildNumber,
+          releaseDate,
+          changelog,
+          downloads: { ...downloads },
+        },
       },
     };
   }
@@ -725,15 +745,76 @@
       return;
     }
 
+    const token = localStorage.getItem('ur_gh_token') || document.getElementById('gh-token').value.trim();
+    const repo = localStorage.getItem('ur_gh_repo') || document.getElementById('gh-repo').value.trim() || 'mpsingh2267/ULTIMATE-REPERTORY';
+
     const btn = document.getElementById('pub-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Publishing update…';
 
     try {
+      // 1. Commit directly to GitHub repository public/updates/version.json if token is present
+      if (token) {
+        try {
+          const ghPath = 'public/updates/version.json';
+          const ghUrl = `https://api.github.com/repos/${repo}/contents/${ghPath}`;
+          let sha = null;
+          const getRes = await fetch(ghUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          });
+          if (getRes.status === 200) {
+            const data = await getRes.json();
+            sha = data.sha;
+          }
+          const contentToSave = {
+            ...updateObj,
+            edition: 'trial',
+            downloads: {
+              ...updateObj.downloads,
+              macos_trial: updateObj.downloads.macos_trial || updateObj.downloads.macos,
+              windows_trial: updateObj.downloads.windows_trial || updateObj.downloads.windows,
+              android_trial: updateObj.downloads.android_trial || updateObj.downloads.android,
+            },
+            editions: {
+              trial: {
+                ...updateObj,
+                downloads: {
+                  ...updateObj.downloads,
+                  macos_trial: updateObj.downloads.macos_trial || updateObj.downloads.macos,
+                },
+              },
+            },
+            revokedDevices: [],
+            revokedLicenses: [],
+            publishedAt: new Date().toISOString(),
+          };
+          const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(contentToSave, null, 2))));
+          await fetch(ghUrl, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: `Publish live update v${updateObj.version} (Build ${updateObj.buildNumber})`,
+              content: b64,
+              sha: sha || undefined,
+            }),
+          });
+        } catch (e) {
+          console.error('Direct GitHub commit failed:', e);
+        }
+      }
+
+      // 2. Call Netlify function publish-update
       const res = await fetch(`${API_BASE}/publish-update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateObj),
+        body: JSON.stringify({ ...updateObj, token, repo }),
       });
       const data = await res.json();
 
