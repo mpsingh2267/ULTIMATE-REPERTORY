@@ -1,42 +1,42 @@
 {
-  "version": "2.5.3",
-  "buildNumber": 53,
+  "version": "2.16.20",
+  "buildNumber": 180,
   "edition": "trial",
   "releaseDate": "2026-10-26",
   "changelog": [
     "✨ 6-month trial support with immediate revocation",
-    "🚀 Streamlined update delivery",
+    "🚀 Streamlined update delivery for Apple Silicon and all platforms",
     "🔒 Zero login required for portal administration"
   ],
   "downloads": {
-    "macos": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg",
-    "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe",
-    "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk",
-    "macos_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg",
-    "windows_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe",
-    "android_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk"
+    "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
+    "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
+    "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk",
+    "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
+    "windows_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
+    "android_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk"
   },
   "editions": {
     "trial": {
-      "version": "2.5.3",
-      "buildNumber": 53,
+      "version": "2.16.20",
+      "buildNumber": 180,
       "releaseDate": "2026-10-26",
       "changelog": [
         "✨ 6-month trial support with immediate revocation",
-        "🚀 Streamlined update delivery",
+        "🚀 Streamlined update delivery for Apple Silicon and all platforms",
         "🔒 Zero login required for portal administration"
       ],
       "downloads": {
-        "macos": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg",
-        "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe",
-        "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk",
-        "macos_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg",
-        "windows_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe",
-        "android_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk"
+        "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
+        "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
+        "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk",
+        "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
+        "windows_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
+        "android_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk"
       }
     }
   },
   "revokedDevices": [],
   "revokedLicenses": [],
-  "publishedAt": "2026-10-26T12:59:06.322Z"
+  "publishedAt": "2026-10-26T16:06:20.239Z"
 }

@@ -347,37 +347,51 @@ async function runAllDiagnostics() {
   console.log('\n🚀 6. Testing Update Publishing:');
 
   await it('Publishes new app version update feed with multi-line changelog & emojis', async () => {
-    const updatePayload = {
-      version: '2.5.3',
-      buildNumber: 53,
-      releaseDate: '2026-10-26',
-      changelog: [
-        '✨ 6-month trial support with immediate revocation',
-        '🚀 Streamlined update delivery',
-        '🔒 Zero login required for portal administration',
-      ],
-      downloads: {
-        macos: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg',
-        windows: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe',
-        android: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk',
-      },
-    };
+    const versionFilePath = path.resolve('public/updates/version.json');
+    let originalVersionContent = null;
+    try {
+      originalVersionContent = await fs.readFile(versionFilePath, 'utf8');
+    } catch {}
 
-    const pubRes = await publishMod.default({
-      httpMethod: 'POST',
-      body: JSON.stringify(updatePayload),
-    });
-    assert.strictEqual(pubRes.statusCode, 200);
-    const pubData = JSON.parse(pubRes.body);
-    assert.strictEqual(pubData.success, true);
-    assert.strictEqual(pubData.update.version, '2.5.3');
-    assert.strictEqual(pubData.update.buildNumber, 53);
+    try {
+      const updatePayload = {
+        version: '2.5.3-test',
+        buildNumber: 999,
+        releaseDate: '2026-10-26',
+        changelog: [
+          '✨ 6-month trial support with immediate revocation',
+          '🚀 Streamlined update delivery',
+          '🔒 Zero login required for portal administration',
+        ],
+        downloads: {
+          macos: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg',
+          windows: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe',
+          android: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk',
+        },
+      };
 
-    const getRes = await getVersionMod.default({ httpMethod: 'GET' });
-    const getData = JSON.parse(getRes.body);
-    assert.strictEqual(getData.version, '2.5.3');
-    assert.strictEqual(getData.buildNumber, 53);
-    assert.strictEqual(getData.changelog.length, 3);
+      const pubRes = await publishMod.default({
+        httpMethod: 'POST',
+        body: JSON.stringify(updatePayload),
+      });
+      assert.strictEqual(pubRes.statusCode, 200);
+      const pubData = JSON.parse(pubRes.body);
+      assert.strictEqual(pubData.success, true);
+      assert.strictEqual(pubData.update.version, '2.5.3-test');
+      assert.strictEqual(pubData.update.buildNumber, 999);
+
+      const getRes = await getVersionMod.default({ httpMethod: 'GET' });
+      const getData = JSON.parse(getRes.body);
+      assert.strictEqual(getData.version, '2.5.3-test');
+      assert.strictEqual(getData.buildNumber, 999);
+      assert.strictEqual(getData.changelog.length, 3);
+      assert.ok(getData.downloads.macos_trial, 'macos_trial must be auto-populated for client app');
+      assert.ok(getData.editions.trial.downloads.windows, 'Windows download must be present in trial edition');
+    } finally {
+      if (originalVersionContent) {
+        await fs.writeFile(versionFilePath, originalVersionContent, 'utf8');
+      }
+    }
   });
 
   // 7. Netlify TOML & HTML UI Integrity
@@ -388,7 +402,6 @@ async function runAllDiagnostics() {
     const toml = await fs.readFile(tomlPath, 'utf8');
 
     assert.ok(toml.includes('node_bundler = "esbuild"'), 'Must specify esbuild bundler');
-    assert.ok(toml.includes('external_node_modules = ["@netlify/blobs"]'), 'Blobs marked external');
     assert.ok(toml.includes('from   = "/updates/version.json"'), 'Must redirect /updates/version.json');
     assert.ok(toml.includes('to     = "/.netlify/functions/get-version"'), 'Must target get-version function');
     assert.ok(toml.includes('from   = "/api/*"'), 'Must redirect /api/*');

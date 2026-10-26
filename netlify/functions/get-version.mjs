@@ -123,23 +123,33 @@ export const handler = async (event) => {
   // Ensure compatibility fields for Flutter customerTrialUpdateUrl:
   // Requires edition: 'trial', downloads['${platform}_trial'], and editions: { trial: ... }
   versionObj.edition = versionObj.edition || 'trial';
+  versionObj.buildNumber = parseInt(versionObj.buildNumber, 10) || 0;
   const dl = versionObj.downloads || {};
+  dl.macos = dl.macos || '';
   dl.macos_trial = dl.macos_trial || dl.macos || '';
+  dl.windows = dl.windows || '';
   dl.windows_trial = dl.windows_trial || dl.windows || '';
+  dl.android = dl.android || '';
   dl.android_trial = dl.android_trial || dl.android || '';
   versionObj.downloads = dl;
 
-  if (!versionObj.editions || !versionObj.editions.trial) {
-    versionObj.editions = {
-      trial: {
-        version: versionObj.version,
-        buildNumber: versionObj.buildNumber,
-        releaseDate: versionObj.releaseDate,
-        changelog: versionObj.changelog,
-        downloads: { ...dl },
-      },
-    };
-  }
+  versionObj.editions = versionObj.editions || {};
+  versionObj.editions.trial = versionObj.editions.trial || {};
+  const trial = versionObj.editions.trial;
+  trial.version = trial.version || versionObj.version;
+  trial.buildNumber = typeof trial.buildNumber === 'number' && trial.buildNumber > 0 ? trial.buildNumber : versionObj.buildNumber;
+  trial.releaseDate = trial.releaseDate || versionObj.releaseDate;
+  trial.changelog = Array.isArray(trial.changelog) && trial.changelog.length > 0 ? trial.changelog : versionObj.changelog;
+  trial.downloads = {
+    ...dl,
+    ...(trial.downloads || {}),
+    macos: trial.downloads?.macos || dl.macos,
+    macos_trial: trial.downloads?.macos_trial || dl.macos_trial || dl.macos,
+    windows: trial.downloads?.windows || dl.windows,
+    windows_trial: trial.downloads?.windows_trial || dl.windows_trial || dl.windows,
+    android: trial.downloads?.android || dl.android,
+    android_trial: trial.downloads?.android_trial || dl.android_trial || dl.android,
+  };
 
   // Dynamically merge active revocations
   try {
