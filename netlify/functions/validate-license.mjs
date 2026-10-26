@@ -16,6 +16,17 @@
  */
 
 import crypto from 'crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
+
+async function getBlobsStore(name) {
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    return getStore(name);
+  } catch {
+    return null;
+  }
+}
 
 // base64 (standard, with padding) → Uint8Array
 const b64ToBytes = (s) => {
@@ -133,30 +144,52 @@ export const handler = async (event) => {
 
   // Check if device code or license ID has been revoked by admin
   try {
-    const { getStore } = await import('@netlify/blobs');
-    const store = getStore('license-keys');
-    const revokedData = await store.get('revocations.json');
-    if (revokedData) {
-      const revocations = JSON.parse(revokedData);
-      const isRevoked = revocations.some(
-        (r) =>
-          (r.deviceCode && r.deviceCode.toUpperCase() === deviceCode.toUpperCase()) ||
-          (r.licenseId && payloadJson.licenseId && r.licenseId === payloadJson.licenseId)
-      );
-      if (isRevoked) {
-        return {
-          statusCode: 200,
-          headers: cors,
-          body: JSON.stringify({
-            valid: false,
-            revoked: true,
-            error: 'This licence has been revoked by the administrator with immediate effect.',
-          }),
-        };
+    let isRevoked = false;
+
+    // 1. Check persistent Netlify Blobs store
+    const store = await getBlobsStore('license-keys');
+    if (store) {
+      const revokedData = await store.get('revocations.json');
+      if (revokedData) {
+        const revocations = JSON.parse(revokedData);
+        isRevoked = revocations.some(
+          (r) =>
+            (r.deviceCode && r.deviceCode.toUpperCase() === deviceCode.toUpperCase()) ||
+            (r.licenseId && payloadJson.licenseId && r.licenseId === payloadJson.licenseId)
+        );
       }
     }
+
+    // 2. Check local/bundled update feed as secondary source or offline fallback
+    if (!isRevoked) {
+      try {
+        const localFilePath = path.resolve(process.cwd(), 'public/updates/version.json');
+        const fileContent = await fs.readFile(localFilePath, 'utf8');
+        const versionObj = JSON.parse(fileContent);
+        const revokedDevs = (versionObj.revokedDevices || []).map((d) => d.toUpperCase());
+        const revokedLics = versionObj.revokedLicenses || [];
+        if (
+          revokedDevs.includes(deviceCode.toUpperCase()) ||
+          (payloadJson.licenseId && revokedLics.includes(payloadJson.licenseId))
+        ) {
+          isRevoked = true;
+        }
+      } catch {}
+    }
+
+    if (isRevoked) {
+      return {
+        statusCode: 200,
+        headers: cors,
+        body: JSON.stringify({
+          valid: false,
+          revoked: true,
+          error: 'This licence has been revoked by the administrator with immediate effect.',
+        }),
+      };
+    }
   } catch {
-    // Blobs may not be configured in offline dev mode
+    // Continue if revocation store check encounters an error
   }
 
   // Check expiry for trial
@@ -182,8 +215,8 @@ export const handler = async (event) => {
       };
     }
     const durationMs = expiresAt.getTime() - issuedAt.getTime();
-    // Allow up to 185 days (~6 months) plus buffer
-    const maxAllowedDurationMs = 185 * 86400000 + 86400000;
+    // Allow up to 370 days (10 days, 6 months / 180 days, and custom up to 365 days)
+    const maxAllowedDurationMs = 370 * 86400000;
     if (durationMs <= 0 || durationMs > maxAllowedDurationMs) {
       return {
         statusCode: 200,

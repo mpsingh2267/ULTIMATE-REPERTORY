@@ -78,8 +78,8 @@ export const handler = async (event) => {
   };
 
   try {
-    let existingRevokedDevices = [];
-    let existingRevokedLicenses = [];
+    const devSet = new Set();
+    const licSet = new Set();
 
     const store = await getBlobsStore('updates');
     if (store) {
@@ -87,12 +87,29 @@ export const handler = async (event) => {
         const existingRaw = await store.get('version.json');
         if (existingRaw) {
           const existingParsed = JSON.parse(existingRaw);
-          existingRevokedDevices = existingParsed.revokedDevices || [];
-          existingRevokedLicenses = existingParsed.revokedLicenses || [];
+          (existingParsed.revokedDevices || []).forEach((d) => devSet.add(d.toUpperCase()));
+          (existingParsed.revokedLicenses || []).forEach((l) => licSet.add(l));
         }
       } catch {
         // Ignore if no previous blob
       }
+    }
+
+    // Also merge from persistent revocations store to guarantee no revocations are lost
+    try {
+      const licenseStore = await getBlobsStore('license-keys');
+      if (licenseStore) {
+        const revRaw = await licenseStore.get('revocations.json');
+        if (revRaw) {
+          const revList = JSON.parse(revRaw);
+          revList.forEach((r) => {
+            if (r.deviceCode) devSet.add(r.deviceCode.toUpperCase());
+            if (r.licenseId) licSet.add(r.licenseId);
+          });
+        }
+      }
+    } catch {
+      // Ignore if unavailable
     }
 
     const versionFeed = {
@@ -101,8 +118,8 @@ export const handler = async (event) => {
       releaseDate,
       changelog,
       downloads,
-      revokedDevices: existingRevokedDevices,
-      revokedLicenses: existingRevokedLicenses,
+      revokedDevices: Array.from(devSet),
+      revokedLicenses: Array.from(licSet),
       publishedAt: new Date().toISOString(),
     };
 

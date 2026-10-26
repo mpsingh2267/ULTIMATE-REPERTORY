@@ -19,6 +19,9 @@
  *   }
  */
 
+import { promises as fs } from 'fs';
+import path from 'path';
+
 async function getBlobsStore(name) {
   try {
     const { getStore } = await import('@netlify/blobs');
@@ -47,6 +50,17 @@ export const handler = async (event) => {
       if (store) {
         const raw = await store.get('revocations.json');
         revocations = raw ? JSON.parse(raw) : [];
+      } else {
+        // Fallback to local version.json file
+        try {
+          const localFilePath = path.resolve(process.cwd(), 'public/updates/version.json');
+          const fileData = await fs.readFile(localFilePath, 'utf8');
+          const localObj = JSON.parse(fileData);
+          revocations = (localObj.revokedDevices || []).map((d) => ({
+            deviceCode: d,
+            revokedAt: localObj.publishedAt || new Date().toISOString(),
+          }));
+        } catch {}
       }
       return {
         statusCode: 200,
@@ -81,45 +95,98 @@ export const handler = async (event) => {
   try {
     const store = await getBlobsStore('license-keys');
 
-    if (store) {
-      const raw = await store.get('revocations.json');
-      let revocations = raw ? JSON.parse(raw) : [];
+    if (event.httpMethod === 'DELETE') {
+      if (store) {
+        try {
+          const raw = await store.get('revocations.json');
+          let revocations = raw ? JSON.parse(raw) : [];
+          revocations = revocations.filter((r) => {
+            if (normalizedDeviceCode && r.deviceCode === normalizedDeviceCode) return false;
+            if (licenseId && r.licenseId === licenseId) return false;
+            return true;
+          });
+          await store.set('revocations.json', JSON.stringify(revocations, null, 2));
 
-      if (event.httpMethod === 'DELETE') {
-        revocations = revocations.filter((r) => {
-          if (normalizedDeviceCode && r.deviceCode === normalizedDeviceCode) return false;
-          if (licenseId && r.licenseId === licenseId) return false;
-          return true;
-        });
-        await store.set('revocations.json', JSON.stringify(revocations, null, 2));
+          // Restore key-log.json status to Active
+          const rawLog = await store.get('key-log.json');
+          if (rawLog) {
+            const logArray = JSON.parse(rawLog);
+            logArray.forEach((item) => {
+              if (
+                (normalizedDeviceCode && item.deviceCode === normalizedDeviceCode) ||
+                (licenseId && item.licenseId === licenseId)
+              ) {
+                item.status = 'Active';
+                delete item.revokedAt;
+              }
+            });
+            await store.set('key-log.json', JSON.stringify(logArray, null, 2));
+          }
 
-        return {
-          statusCode: 200,
-          headers: { ...cors, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ success: true, message: 'Revocation removed' }),
-        };
+          // Remove from update feed in Blobs
+          const updateStore = await getBlobsStore('updates');
+          if (updateStore) {
+            const rawVersion = await updateStore.get('version.json');
+            if (rawVersion) {
+              const versionObj = JSON.parse(rawVersion);
+              if (Array.isArray(versionObj.revokedDevices) && normalizedDeviceCode) {
+                versionObj.revokedDevices = versionObj.revokedDevices.filter((d) => d.toUpperCase() !== normalizedDeviceCode);
+              }
+              if (Array.isArray(versionObj.revokedLicenses) && licenseId) {
+                versionObj.revokedLicenses = versionObj.revokedLicenses.filter((l) => l !== licenseId);
+              }
+              await updateStore.set('version.json', JSON.stringify(versionObj, null, 2));
+            }
+          }
+        } catch (storeErr) {
+          console.error('Blobs un-revocation error:', storeErr);
+        }
       }
 
-      if (event.httpMethod === 'POST') {
-        const revokedAt = new Date().toISOString();
-        const revocationEntry = {
-          deviceCode: normalizedDeviceCode || null,
-          licenseId: licenseId || null,
-          revokedAt,
-          reason,
-        };
+      // Always sync local version.json file if present
+      try {
+        const localFilePath = path.resolve(process.cwd(), 'public/updates/version.json');
+        const fileData = await fs.readFile(localFilePath, 'utf8');
+        const localObj = JSON.parse(fileData);
+        if (Array.isArray(localObj.revokedDevices) && normalizedDeviceCode) {
+          localObj.revokedDevices = localObj.revokedDevices.filter((d) => d.toUpperCase() !== normalizedDeviceCode);
+        }
+        if (Array.isArray(localObj.revokedLicenses) && licenseId) {
+          localObj.revokedLicenses = localObj.revokedLicenses.filter((l) => l !== licenseId);
+        }
+        await fs.writeFile(localFilePath, JSON.stringify(localObj, null, 2), 'utf8');
+      } catch {}
 
-        // Avoid duplicates
-        revocations = revocations.filter(
-          (r) =>
-            (!normalizedDeviceCode || r.deviceCode !== normalizedDeviceCode) &&
-            (!licenseId || r.licenseId !== licenseId)
-        );
-        revocations.unshift(revocationEntry);
-        await store.set('revocations.json', JSON.stringify(revocations, null, 2));
+      return {
+        statusCode: 200,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, message: 'Revocation removed and trial restored' }),
+      };
+    }
 
-        // Update key-log.json status if found
+    if (event.httpMethod === 'POST') {
+      const revokedAt = new Date().toISOString();
+      const revocationEntry = {
+        deviceCode: normalizedDeviceCode || null,
+        licenseId: licenseId || null,
+        revokedAt,
+        reason,
+      };
+
+      if (store) {
         try {
+          const raw = await store.get('revocations.json');
+          let revocations = raw ? JSON.parse(raw) : [];
+          // Avoid duplicates
+          revocations = revocations.filter(
+            (r) =>
+              (!normalizedDeviceCode || r.deviceCode !== normalizedDeviceCode) &&
+              (!licenseId || r.licenseId !== licenseId)
+          );
+          revocations.unshift(revocationEntry);
+          await store.set('revocations.json', JSON.stringify(revocations, null, 2));
+
+          // Update key-log.json status if found
           const rawLog = await store.get('key-log.json');
           if (rawLog) {
             const logArray = JSON.parse(rawLog);
@@ -134,12 +201,8 @@ export const handler = async (event) => {
             });
             await store.set('key-log.json', JSON.stringify(logArray, null, 2));
           }
-        } catch (logErr) {
-          console.error('Failed to update status in log:', logErr);
-        }
 
-        // Sync into update feed (version.json in 'updates' store)
-        try {
+          // Sync into update feed (version.json in 'updates' store)
           const updateStore = await getBlobsStore('updates');
           if (updateStore) {
             const rawVersion = await updateStore.get('version.json');
@@ -153,31 +216,33 @@ export const handler = async (event) => {
             versionObj.revokedLicenses = Array.from(revokedLicenses);
             await updateStore.set('version.json', JSON.stringify(versionObj, null, 2));
           }
-        } catch (updateErr) {
-          console.error('Failed to sync revocation to version feed:', updateErr);
+        } catch (storeErr) {
+          console.error('Blobs revocation error:', storeErr);
         }
-
-        return {
-          statusCode: 200,
-          headers: { ...cors, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            success: true,
-            message: `Trial revoked immediately for device ${normalizedDeviceCode || licenseId}`,
-            revokedAt,
-            entry: revocationEntry,
-          }),
-        };
       }
-    } else {
-      // Local offline fallback
-      const revokedAt = new Date().toISOString();
+
+      // Always sync local version.json file if present
+      try {
+        const localFilePath = path.resolve(process.cwd(), 'public/updates/version.json');
+        const fileData = await fs.readFile(localFilePath, 'utf8');
+        const localObj = JSON.parse(fileData);
+        const devSet = new Set((localObj.revokedDevices || []).map((d) => d.toUpperCase()));
+        const licSet = new Set(localObj.revokedLicenses || []);
+        if (normalizedDeviceCode) devSet.add(normalizedDeviceCode);
+        if (licenseId) licSet.add(licenseId);
+        localObj.revokedDevices = Array.from(devSet);
+        localObj.revokedLicenses = Array.from(licSet);
+        await fs.writeFile(localFilePath, JSON.stringify(localObj, null, 2), 'utf8');
+      } catch {}
+
       return {
         statusCode: 200,
         headers: { ...cors, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
-          message: `Trial revoked immediately for device ${normalizedDeviceCode || licenseId} (offline mode)`,
+          message: `Trial revoked immediately for device ${normalizedDeviceCode || licenseId}`,
           revokedAt,
+          entry: revocationEntry,
         }),
       };
     }

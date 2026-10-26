@@ -1,17 +1,18 @@
 {
-  "version": "2.5.2",
-  "buildNumber": 52,
+  "version": "2.5.3",
+  "buildNumber": 53,
   "releaseDate": "2026-10-26",
   "changelog": [
-    "No login needed",
-    "Direct operation"
+    "✨ 6-month trial support with immediate revocation",
+    "🚀 Streamlined update delivery",
+    "🔒 Zero login required for portal administration"
   ],
   "downloads": {
-    "macos": "https://test/mac.pkg",
-    "windows": "",
-    "android": ""
+    "macos": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Universal-Mac.pkg",
+    "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Windows-Setup.exe",
+    "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.3-Trial-Android-Tablet-Universal.apk"
   },
   "revokedDevices": [],
   "revokedLicenses": [],
-  "publishedAt": "2026-10-26T07:43:39.892Z"
+  "publishedAt": "2026-10-26T08:25:12.510Z"
 }

@@ -563,7 +563,7 @@
     }
   }
 
-  // ──────────────── Stop Trial Immediately ───────────
+  // ──────────────── Stop & Restore Trial ───────────────
   async function stopTrialImmediately(overrideDeviceCode = null) {
     const deviceCode = (overrideDeviceCode || document.getElementById('revoke-device').value).trim();
     const reason = document.getElementById('revoke-reason').value.trim() || 'Trial stopped with immediate effect by administrator';
@@ -604,6 +604,28 @@
     } finally {
       btn.disabled = false;
       btn.innerHTML = '⛔ Stop Trial With Immediate Effect';
+    }
+  }
+
+  async function restoreTrial(deviceCode) {
+    if (!deviceCode) return;
+    if (!confirm(`Restore and unblock trial access for device "${deviceCode}"?`)) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/revoke-license`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        alert(`❌ Failed to restore trial: ${data.error || res.statusText}`);
+      } else {
+        alert(`✅ Trial access restored for ${deviceCode}!`);
+        loadPersistentLog();
+      }
+    } catch (e) {
+      alert(`❌ Network error: ${e.message}`);
     }
   }
 
@@ -739,7 +761,9 @@
           <td><span class="badge badge-${isRevoked ? 'revoked' : 'active'}">${e.status || 'Active'}</span></td>
           <td style="font-family:monospace;font-size:0.76rem">${e.keyPreview}</td>
           <td>
-            ${!isRevoked ? `<button class="btn btn-danger-outline btn-small" onclick="stopTrialImmediately('${dev}')" title="Stop trial immediately">⛔ Stop</button>` : '<span style="color:var(--red);font-size:0.76rem;font-weight:bold;">Revoked</span>'}
+            ${!isRevoked 
+              ? `<button class="btn btn-danger-outline btn-small" onclick="stopTrialImmediately('${dev}')" title="Stop trial with immediate effect">⛔ Stop</button>` 
+              : `<button class="btn btn-secondary btn-small" onclick="restoreTrial('${dev}')" title="Restore trial access" style="color:var(--teal)">↩ Restore</button>`}
           </td>
         </tr>`;
     }).join('');
