@@ -6,12 +6,13 @@
  * Returns the persistent license key log from Netlify Blobs.
  */
 
-let getStore = null;
-try {
-  const blobs = await import('@netlify/blobs');
-  getStore = blobs.getStore;
-} catch {
-  // Blobs not available in local test environment
+async function getBlobsStore(name) {
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    return getStore(name);
+  } catch {
+    return null;
+  }
 }
 
 export const handler = async (event) => {
@@ -32,8 +33,8 @@ export const handler = async (event) => {
     let logArray = [];
     let revocations = [];
 
-    if (getStore) {
-      const store = getStore('license-keys');
+    const store = await getBlobsStore('license-keys');
+    if (store) {
       const logData = await store.get('key-log.json');
       const revokedData = await store.get('revocations.json');
       
@@ -81,3 +82,5 @@ export const handler = async (event) => {
     };
   }
 };
+
+export default handler;

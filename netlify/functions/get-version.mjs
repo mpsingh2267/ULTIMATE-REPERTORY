@@ -10,17 +10,14 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const filePath = path.resolve(__dirname, '../../public/updates/version.json');
-
-let getStore = null;
-try {
-  const blobs = await import('@netlify/blobs');
-  getStore = blobs.getStore;
-} catch {
-  // Blobs not available in local test environment
+async function getBlobsStore(name) {
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    return getStore(name);
+  } catch {
+    return null;
+  }
 }
 
 export const handler = async (event) => {
@@ -36,9 +33,9 @@ export const handler = async (event) => {
   }
 
   // 1. Check Netlify Blobs 'updates' store if available
-  if (getStore) {
-    try {
-      const store = getStore('updates');
+  try {
+    const store = await getBlobsStore('updates');
+    if (store) {
       const blobVersion = await store.get('version.json');
       if (blobVersion) {
         return {
@@ -47,13 +44,14 @@ export const handler = async (event) => {
           body: blobVersion,
         };
       }
-    } catch {
-      // Fallback if blob fetch fails
     }
+  } catch {
+    // Fallback if blob fetch fails
   }
 
   // 2. Fall back to reading public/updates/version.json from repository
   try {
+    const filePath = path.resolve(process.cwd(), 'public/updates/version.json');
     const fileContent = await fs.readFile(filePath, 'utf8');
     return {
       statusCode: 200,
@@ -63,18 +61,18 @@ export const handler = async (event) => {
   } catch {
     // 3. Fallback default object if file is missing
     const fallback = {
-      version: '2.5.1',
-      buildNumber: 51,
-      releaseDate: '2026-08-29',
+      version: '2.5.2',
+      buildNumber: 52,
+      releaseDate: '2026-10-26',
       changelog: [
-        'Auto-update system linked to this portal',
-        'Persistent highlight and bold modes in Materia Medica',
-        'Patient case search and document attachments',
-        'Trial / Full licence management with in-app upgrade dialog',
+        '6-month trial support',
+        'Immediate trial revocation capability',
+        'Live update feed management via owner portal',
       ],
       downloads: {
-        macos: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.1-10-Day-Trial-Universal-Mac.pkg',
-        android: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.1-10-Day-Trial-Android-Tablet-Universal.apk',
+        macos: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Universal-Mac.pkg',
+        windows: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe',
+        android: 'https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk',
       },
       revokedDevices: [],
       revokedLicenses: [],
@@ -86,3 +84,5 @@ export const handler = async (event) => {
     };
   }
 };
+
+export default handler;

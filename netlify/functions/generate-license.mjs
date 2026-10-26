@@ -24,12 +24,13 @@
 
 import crypto from 'crypto';
 
-let getStore = null;
-try {
-  const blobs = await import('@netlify/blobs');
-  getStore = blobs.getStore;
-} catch {
-  // Blobs not available in local test environment
+async function getBlobsStore(name) {
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    return getStore(name);
+  } catch {
+    return null;
+  }
 }
 
 const hex2bytes = (hex) =>
@@ -138,9 +139,9 @@ export const handler = async (event) => {
   const key = `UR1.${payloadStr}.${sigStr}`;
 
   // Log to Netlify Blobs for persistent storage
-  if (getStore) {
-    try {
-      const store = getStore('license-keys');
+  try {
+    const store = await getBlobsStore('license-keys');
+    if (store) {
       const logEntry = {
         date: new Date().toISOString().slice(0, 19).replace('T', ' '),
         deviceCode: normalizedDeviceCode,
@@ -166,10 +167,10 @@ export const handler = async (event) => {
       logArray.unshift(logEntry);
       logArray = logArray.slice(0, 200); // Keep last 200 entries
       await store.set('key-log.json', JSON.stringify(logArray, null, 2));
-    } catch (blobError) {
-      console.error('Failed to log to Blobs:', blobError);
-      // Continue even if logging fails
     }
+  } catch (blobError) {
+    console.error('Failed to log to Blobs:', blobError);
+    // Continue even if logging fails
   }
 
   return {
@@ -185,3 +186,5 @@ export const handler = async (event) => {
     }),
   };
 };
+
+export default handler;

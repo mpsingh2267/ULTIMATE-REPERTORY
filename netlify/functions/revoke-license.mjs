@@ -4,7 +4,6 @@
  * POST /api/revoke-license
  * Body:
  *   {
- *     "passkey": "owner-admin-passkey",
  *     "deviceCode": "AABBCC-DDEEFF-112233-445566",
  *     "licenseId": "optional-uuid",
  *     "reason": "optional reason string"
@@ -16,17 +15,17 @@
  * DELETE /api/revoke-license
  * Body:
  *   {
- *     "passkey": "owner-admin-passkey",
  *     "deviceCode": "AABBCC-DDEEFF-112233-445566"
  *   }
  */
 
-let getStore = null;
-try {
-  const blobs = await import('@netlify/blobs');
-  getStore = blobs.getStore;
-} catch {
-  // Blobs not available in local test environment
+async function getBlobsStore(name) {
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    return getStore(name);
+  } catch {
+    return null;
+  }
 }
 
 export const handler = async (event) => {
@@ -44,8 +43,8 @@ export const handler = async (event) => {
   if (event.httpMethod === 'GET') {
     try {
       let revocations = [];
-      if (getStore) {
-        const store = getStore('license-keys');
+      const store = await getBlobsStore('license-keys');
+      if (store) {
         const raw = await store.get('revocations.json');
         revocations = raw ? JSON.parse(raw) : [];
       }
@@ -80,14 +79,13 @@ export const handler = async (event) => {
   }
 
   try {
-    let revocations = [];
-    if (getStore) {
-      const store = getStore('license-keys');
+    const store = await getBlobsStore('license-keys');
+
+    if (store) {
       const raw = await store.get('revocations.json');
-      revocations = raw ? JSON.parse(raw) : [];
+      let revocations = raw ? JSON.parse(raw) : [];
 
       if (event.httpMethod === 'DELETE') {
-        // Remove revocation
         revocations = revocations.filter((r) => {
           if (normalizedDeviceCode && r.deviceCode === normalizedDeviceCode) return false;
           if (licenseId && r.licenseId === licenseId) return false;
@@ -142,17 +140,19 @@ export const handler = async (event) => {
 
         // Sync into update feed (version.json in 'updates' store)
         try {
-          const updateStore = getStore('updates');
-          const rawVersion = await updateStore.get('version.json');
-          let versionObj = rawVersion ? JSON.parse(rawVersion) : {};
-          const revokedDevices = new Set(versionObj.revokedDevices || []);
-          const revokedLicenses = new Set(versionObj.revokedLicenses || []);
-          if (normalizedDeviceCode) revokedDevices.add(normalizedDeviceCode);
-          if (licenseId) revokedLicenses.add(licenseId);
+          const updateStore = await getBlobsStore('updates');
+          if (updateStore) {
+            const rawVersion = await updateStore.get('version.json');
+            let versionObj = rawVersion ? JSON.parse(rawVersion) : {};
+            const revokedDevices = new Set(versionObj.revokedDevices || []);
+            const revokedLicenses = new Set(versionObj.revokedLicenses || []);
+            if (normalizedDeviceCode) revokedDevices.add(normalizedDeviceCode);
+            if (licenseId) revokedLicenses.add(licenseId);
 
-          versionObj.revokedDevices = Array.from(revokedDevices);
-          versionObj.revokedLicenses = Array.from(revokedLicenses);
-          await updateStore.set('version.json', JSON.stringify(versionObj, null, 2));
+            versionObj.revokedDevices = Array.from(revokedDevices);
+            versionObj.revokedLicenses = Array.from(revokedLicenses);
+            await updateStore.set('version.json', JSON.stringify(versionObj, null, 2));
+          }
         } catch (updateErr) {
           console.error('Failed to sync revocation to version feed:', updateErr);
         }
@@ -192,3 +192,5 @@ export const handler = async (event) => {
     };
   }
 };
+
+export default handler;

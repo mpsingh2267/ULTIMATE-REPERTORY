@@ -4,7 +4,6 @@
  * POST /api/publish-update
  * Body:
  *   {
- *     "passkey": "owner-admin-passkey",
  *     "version": "2.5.2",
  *     "buildNumber": 52,
  *     "releaseDate": "2026-10-26",
@@ -22,17 +21,14 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const localFilePath = path.resolve(__dirname, '../../public/updates/version.json');
-
-let getStore = null;
-try {
-  const blobs = await import('@netlify/blobs');
-  getStore = blobs.getStore;
-} catch {
-  // Blobs not available in local test environment
+async function getBlobsStore(name) {
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    return getStore(name);
+  } catch {
+    return null;
+  }
 }
 
 export const handler = async (event) => {
@@ -85,10 +81,9 @@ export const handler = async (event) => {
     let existingRevokedDevices = [];
     let existingRevokedLicenses = [];
 
-    // Check store for existing revocations if store is available
-    if (getStore) {
+    const store = await getBlobsStore('updates');
+    if (store) {
       try {
-        const store = getStore('updates');
         const existingRaw = await store.get('version.json');
         if (existingRaw) {
           const existingParsed = JSON.parse(existingRaw);
@@ -112,9 +107,8 @@ export const handler = async (event) => {
     };
 
     // Store in Netlify Blobs if available
-    if (getStore) {
+    if (store) {
       try {
-        const store = getStore('updates');
         await store.set('version.json', JSON.stringify(versionFeed, null, 2));
       } catch (blobErr) {
         console.error('Failed to set in Blobs:', blobErr);
@@ -123,6 +117,7 @@ export const handler = async (event) => {
 
     // Also attempt local filesystem update for local dev or static deployment
     try {
+      const localFilePath = path.resolve(process.cwd(), 'public/updates/version.json');
       await fs.writeFile(localFilePath, JSON.stringify(versionFeed, null, 2), 'utf8');
     } catch {
       // In read-only serverless lambdas this may fail silently, which is completely expected
@@ -146,3 +141,5 @@ export const handler = async (event) => {
     };
   }
 };
+
+export default handler;
