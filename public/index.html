@@ -12,7 +12,9 @@
       --teal-dark: #055a4d;
       --teal-light: #e8f5f2;
       --amber: #b37c00;
+      --amber-light: #fff8e6;
       --red: #b3261e;
+      --red-light: #fde8e8;
       --bg: #f5faf9;
       --card: #ffffff;
       --text: #1a2421;
@@ -63,10 +65,10 @@
       grid-template-columns: 1fr 1fr;
       gap: 24px;
       padding: 24px 40px 40px;
-      max-width: 1160px;
+      max-width: 1180px;
       margin: 0 auto;
     }
-    @media (max-width: 780px) {
+    @media (max-width: 840px) {
       main { grid-template-columns: 1fr; padding: 16px; }
       header { padding: 18px 20px; }
     }
@@ -112,12 +114,19 @@
     }
     textarea { resize: vertical; min-height: 80px; }
 
-    .field { margin-bottom: 0; }
+    .help-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: -10px;
+      margin-bottom: 14px;
+      display: block;
+    }
 
     /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 7px;
       padding: 11px 20px;
       border-radius: 9px;
@@ -137,7 +146,19 @@
       color: var(--teal);
     }
     .btn-secondary:hover { background: #cde8e2; }
+    .btn-danger {
+      background: var(--red);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #8e1c16; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(179,38,30,0.25); }
+    .btn-danger-outline {
+      background: var(--red-light);
+      color: var(--red);
+      border: 1px solid #f5c2c2;
+    }
+    .btn-danger-outline:hover { background: #fad1d1; }
     .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-small { padding: 4px 9px; font-size: 0.78rem; border-radius: 6px; }
 
     /* Result box */
     .result-box {
@@ -150,7 +171,8 @@
       display: none;
     }
     .result-box.show { display: block; }
-    .result-box.error { background: #fde8e8; border-color: #e8b0ae; }
+    .result-box.error { background: #fde8e8; border-color: #e8b0ae; color: #7f1d1d; }
+    .result-box.warning { background: #fff8e6; border-color: #ffe08a; color: #8a6100; }
     .result-box .key-display {
       font-family: 'SF Mono', 'Fira Code', monospace;
       font-size: 0.8rem;
@@ -169,27 +191,31 @@
     /* Version editor */
     .version-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 12px;
     }
-    @media (max-width: 480px) { .version-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .version-grid { grid-template-columns: 1fr; } }
 
     /* Log table */
-    .log-table-wrap { overflow-x: auto; margin-top: 8px; max-height: 320px; overflow-y: auto; }
+    .log-table-wrap { overflow-x: auto; margin-top: 8px; max-height: 380px; overflow-y: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
-    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { background: var(--teal-light); font-weight: 700; color: var(--teal); position: sticky; top: 0; }
+    th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { background: var(--teal-light); font-weight: 700; color: var(--teal); position: sticky; top: 0; z-index: 2; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f5fefb; }
+    tr.is-revoked td { background: #fff5f5; color: #7f1d1d; }
+
     .badge {
       display: inline-block;
-      padding: 2px 9px;
+      padding: 3px 9px;
       border-radius: 20px;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 700;
     }
     .badge-full { background: #d4f4ec; color: #065c48; }
     .badge-trial { background: #fff0c2; color: #7a5200; }
+    .badge-active { background: #e0f2fe; color: #0369a1; }
+    .badge-revoked { background: #fee2e2; color: #b91c1c; }
 
     /* Spinner */
     .spinner {
@@ -203,10 +229,11 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Secret input */
-    .secret-row { display: flex; gap: 8px; margin-bottom: 20px; }
-    .secret-row input { margin-bottom: 0; }
-    .secret-row .btn { white-space: nowrap; padding: 10px 14px; }
+    .flex-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -219,14 +246,10 @@
     <circle cx="32" cy="32" r="4" fill="white" opacity="0.7"/>
   </svg>
   <div>
-    <h1>Ultimate Repertory — Licence Manager</h1>
-    <p>Generate, validate &amp; manage license keys</p>
+    <h1>Ultimate Repertory — Licence &amp; Update Manager</h1>
+    <p>Manage licence keys, issue 10-day &amp; 6-month trials, halt trials immediately &amp; publish live updates</p>
   </div>
 </header>
-
-<div id="auth-banner">
-  ⚠️ <span><strong>No login is enabled.</strong> Anyone who knows this portal URL can generate trial or permanent full licence keys.</span>
-</div>
 
 <main>
 
@@ -240,18 +263,29 @@
     <input type="text" id="device-code" placeholder="e.g. AABBCC-DDEEFF-112233-445566" />
 
     <label for="edition">Edition</label>
-    <select id="edition" onchange="toggleExpiry()">
-      <option value="trial">Trial (10-day)</option>
-      <option value="full">Full Access (Permanent)</option>
+    <select id="edition" onchange="toggleDurationOptions()">
+      <option value="trial">Trial Edition</option>
+      <option value="full">Full Access (Permanent — Never Expires)</option>
     </select>
 
-    <div id="expiry-row">
-      <label>Trial duration</label>
-      <input type="text" value="10 days (fixed)" disabled />
+    <div id="trial-duration-group">
+      <label for="trial-duration">Trial Duration</label>
+      <select id="trial-duration" onchange="onTrialDurationChange()">
+        <option value="10d">10 Days (Standard Evaluation)</option>
+        <option value="6m" selected>6 Months / 180 Days (Extended Trial)</option>
+        <option value="custom">Custom Duration in Days…</option>
+      </select>
+
+      <div id="custom-days-group" style="display:none; margin-top:8px;">
+        <label for="custom-days">Custom Trial Days</label>
+        <input type="number" id="custom-days" min="1" max="365" value="180" placeholder="Number of days (e.g. 180)" />
+      </div>
     </div>
 
+    <span class="help-hint" id="expiry-preview">Estimated Expiry: ~180 days from activation</span>
+
     <button id="gen-btn" class="btn btn-primary" onclick="generateKey()" style="width:100%">
-      Generate Key
+      Generate License Key
     </button>
 
     <div id="gen-result" class="result-box"></div>
@@ -266,34 +300,37 @@
     <label for="val-device">Device Code</label>
     <input type="text" id="val-device" placeholder="e.g. AABBCC-DDEEFF-112233-445566" />
 
-    <label for="val-key">License Key (base64)</label>
-    <textarea id="val-key" placeholder="Paste the key here…" rows="4"></textarea>
+    <label for="val-key">License Key (base64 UR1 token)</label>
+    <textarea id="val-key" placeholder="Paste the UR1.... key here…" rows="4"></textarea>
 
     <button class="btn btn-secondary" onclick="validateKey()" style="width:100%">
-      Validate Key
+      Validate Key &amp; Check Revocation
     </button>
 
     <div id="val-result" class="result-box"></div>
   </div>
 
   <!-- ──────────────────────────────────────────────── -->
-  <!-- Card 3: Update version.json                      -->
+  <!-- Card 3: Publish App Update (Update Sending)       -->
   <!-- ──────────────────────────────────────────────── -->
   <div class="card" style="grid-column: 1 / -1;">
-    <h2><span class="icon">🚀</span> Publish App Update</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h2 style="margin-bottom:0;"><span class="icon">🚀</span> Publish &amp; Send App Update</h2>
+      <span id="live-version-badge" class="badge badge-active">Polling live feed…</span>
+    </div>
     <p style="font-size:0.87rem; color:var(--muted); margin-bottom:18px;">
-      Edit the fields below and click <strong>Save version.json</strong>. The app polls this feed on every launch.
-      The file is saved as <code>public/updates/version.json</code> in this repository — <em>commit and push to deploy</em>.
+      Update the version, build number, changelog and installer download links.
+      Clicking <strong>Save &amp; Publish Live Update</strong> immediately updates the remote feed polled by all customer apps on launch.
     </p>
 
     <div class="version-grid">
       <div>
         <label for="v-version">Version string</label>
-        <input type="text" id="v-version" value="2.5.1" />
+        <input type="text" id="v-version" value="2.5.2" />
       </div>
       <div>
         <label for="v-build">Build number (integer)</label>
-        <input type="number" id="v-build" value="51" />
+        <input type="number" id="v-build" value="52" />
       </div>
       <div>
         <label for="v-date">Release date</label>
@@ -302,41 +339,78 @@
     </div>
 
     <label for="v-changelog">Changelog (one entry per line)</label>
-    <textarea id="v-changelog" rows="5" placeholder="New feature&#10;Bug fix…"></textarea>
+    <textarea id="v-changelog" rows="4" placeholder="6-month trial support&#10;Immediate trial revocation capability&#10;Bug fixes and performance enhancements"></textarea>
 
     <div class="version-grid">
       <div>
-        <label for="v-mac">macOS download URL</label>
-        <input type="url" id="v-mac" placeholder="https://…dmg" />
+        <label for="v-mac">macOS download URL (.pkg / .dmg)</label>
+        <input type="url" id="v-mac" placeholder="https://…Universal-Mac.pkg" />
       </div>
       <div>
-        <label for="v-win">Windows download URL</label>
-        <input type="url" id="v-win" placeholder="https://…exe" />
+        <label for="v-win">Windows download URL (.exe / .zip)</label>
+        <input type="url" id="v-win" placeholder="https://…Windows-Setup.exe" />
       </div>
       <div>
-        <label for="v-android">Android download URL</label>
-        <input type="url" id="v-android" placeholder="https://….apk" />
+        <label for="v-android">Android download URL (.apk)</label>
+        <input type="url" id="v-android" placeholder="https://…Android.apk" />
       </div>
     </div>
 
-    <div style="display:flex; gap:12px; margin-top:4px;">
-      <button class="btn btn-primary" onclick="buildVersionJson()">📄 Preview JSON</button>
+    <div class="flex-row" style="margin-top:4px; flex-wrap:wrap;">
+      <button id="pub-btn" class="btn btn-primary" onclick="sendAndPublishUpdate()">
+        🚀 Save &amp; Publish Live Update
+      </button>
+      <button class="btn btn-secondary" onclick="buildVersionJson()">📄 Preview JSON</button>
       <button class="btn btn-secondary" onclick="copyVersionJson()">📋 Copy JSON</button>
+      <a class="btn btn-secondary" href="/updates/version.json" target="_blank">🌐 View Live Feed (/updates/version.json)</a>
     </div>
 
     <div id="version-result" class="result-box"></div>
   </div>
 
   <!-- ──────────────────────────────────────────────── -->
-  <!-- Card 4: Recent issue log (localStorage)          -->
+  <!-- Card 4: Stop Trial Immediately (Kill-Switch)     -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div class="card" style="grid-column: 1 / -1; border-color:#f5c2c2; background:#fffcfc;">
+    <h2><span class="icon">⛔</span> Immediate Trial Revocation (Kill-Switch)</h2>
+    <p style="font-size:0.87rem; color:var(--muted); margin-bottom:18px;">
+      Halt any trial with <strong>immediate effect</strong>. Stopping a trial adds the device code to the remote server revocation blocklist and live update feed.
+      Any device checking in will have its licence invalidated immediately.
+    </p>
+
+    <div class="version-grid" style="grid-template-columns: 1fr 1fr auto;">
+      <div>
+        <label for="revoke-device">Device Code to Stop</label>
+        <input type="text" id="revoke-device" placeholder="e.g. AABBCC-DDEEFF-112233-445566" />
+      </div>
+      <div>
+        <label for="revoke-reason">Reason (optional)</label>
+        <input type="text" id="revoke-reason" placeholder="e.g. Owner requested immediate stop / Trial expired" />
+      </div>
+      <div style="display:flex; align-items:flex-end; margin-bottom:14px;">
+        <button id="revoke-btn" class="btn btn-danger" onclick="stopTrialImmediately()">
+          ⛔ Stop Trial With Immediate Effect
+        </button>
+      </div>
+    </div>
+
+    <div id="revoke-result" class="result-box"></div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────── -->
+  <!-- Card 5: Key Issue Log & Active Trials             -->
   <!-- ──────────────────────────────────────────────── -->
   <div class="card" style="grid-column: 1 / -1;">
-    <h2 style="justify-content:space-between;">
-      <span><span class="icon">📋</span> Key Issue Log (this browser)</span>
-      <button class="btn btn-secondary" onclick="clearLog()" style="font-size:0.8rem;padding:5px 12px;">Clear</button>
-    </h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h2 style="margin-bottom:0;"><span class="icon">📋</span> Licence &amp; Trial Issue Log</h2>
+      <div class="flex-row">
+        <button class="btn btn-secondary btn-small" onclick="loadPersistentLog()">🔄 Refresh</button>
+        <button class="btn btn-secondary btn-small" onclick="exportLog()">⬇ Export CSV</button>
+        <button class="btn btn-secondary btn-small" onclick="clearLog()">Clear Local</button>
+      </div>
+    </div>
     <p style="font-size:0.83rem;color:var(--muted);margin-bottom:12px;">
-      Stored locally in browser — not synced to server. Export and save manually after each session.
+      Persistent server history of generated licenses, active trials, and revocations. Click <strong>Stop</strong> on any active trial to terminate it with immediate effect.
     </p>
     <div class="log-table-wrap">
       <table id="log-table">
@@ -345,17 +419,17 @@
             <th>Date</th>
             <th>Device ID</th>
             <th>Edition</th>
+            <th>Duration</th>
             <th>Expires</th>
-            <th>Key (first 24 chars)</th>
+            <th>Status</th>
+            <th>Key Preview</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="log-body">
-          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No keys generated yet in this session.</td></tr>
+          <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">Loading issued keys…</td></tr>
         </tbody>
       </table>
-    </div>
-    <div style="margin-top:12px;">
-      <button class="btn btn-secondary" onclick="exportLog()">⬇ Export log as CSV</button>
     </div>
   </div>
 
@@ -365,10 +439,10 @@
   // ──────────────── Helpers ──────────────────────────
   const API_BASE = window.location.origin + '/api';
 
-  function showResult(id, html, isError = false) {
+  function showResult(id, html, type = 'success') {
     const el = document.getElementById(id);
     el.innerHTML = html;
-    el.className = 'result-box show' + (isError ? ' error' : '');
+    el.className = 'result-box show ' + (type === 'error' ? 'error' : type === 'warning' ? 'warning' : '');
   }
 
   function copyText(text) {
@@ -377,11 +451,36 @@
     });
   }
 
-  function toggleExpiry() {
+  function toggleDurationOptions() {
     const ed = document.getElementById('edition').value;
-    document.getElementById('expiry-row').style.display = ed === 'trial' ? '' : 'none';
+    const group = document.getElementById('trial-duration-group');
+    const preview = document.getElementById('expiry-preview');
+    if (ed === 'trial') {
+      group.style.display = '';
+      onTrialDurationChange();
+    } else {
+      group.style.display = 'none';
+      preview.textContent = 'Full Access: Permanent licence (never expires)';
+    }
   }
-  toggleExpiry();
+
+  function onTrialDurationChange() {
+    const dur = document.getElementById('trial-duration').value;
+    const customGroup = document.getElementById('custom-days-group');
+    const preview = document.getElementById('expiry-preview');
+    if (dur === 'custom') {
+      customGroup.style.display = '';
+      const days = parseInt(document.getElementById('custom-days').value, 10) || 180;
+      preview.textContent = `Estimated Expiry: ${days} days from activation`;
+    } else {
+      customGroup.style.display = 'none';
+      if (dur === '6m') {
+        preview.textContent = 'Estimated Expiry: 6 Months (180 days) from activation';
+      } else {
+        preview.textContent = 'Estimated Expiry: 10 Days from activation';
+      }
+    }
+  }
 
   // ──────────────── Generate Key ─────────────────────
   async function generateKey() {
@@ -389,7 +488,15 @@
     if (!deviceCode) { alert('Device Code is required.'); return; }
 
     const edition = document.getElementById('edition').value;
-    const expiryDays = 10;
+    let trialDuration = '10d';
+    if (edition === 'trial') {
+      const dur = document.getElementById('trial-duration').value;
+      if (dur === 'custom') {
+        trialDuration = String(parseInt(document.getElementById('custom-days').value, 10) || 180);
+      } else {
+        trialDuration = dur;
+      }
+    }
 
     const btn = document.getElementById('gen-btn');
     btn.disabled = true;
@@ -399,26 +506,27 @@
       const res = await fetch(`${API_BASE}/generate-license`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceCode, edition, expiryDays }),
+        body: JSON.stringify({ deviceCode, edition, trialDuration }),
       });
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        showResult('gen-result', `❌ Error: ${data.error || res.statusText}`, true);
+        showResult('gen-result', `❌ Error: ${data.error || res.statusText}`, 'error');
       } else {
         showResult('gen-result', `
-          <strong style="color:var(--teal)">✅ Key generated!</strong><br>
-          <small style="color:var(--muted)">Device: <code>${data.deviceCode}</code> &nbsp;·&nbsp; Edition: <strong>${data.edition}</strong> &nbsp;·&nbsp; Expires: <strong>${data.expiresAt || 'PERMANENT'}</strong></small>
+          <strong style="color:var(--teal)">✅ Key generated successfully!</strong><br>
+          <small style="color:var(--muted)">Device: <code>${data.deviceCode}</code> &nbsp;·&nbsp; Edition: <strong>${data.edition.toUpperCase()}</strong> (${data.duration || 'Standard'}) &nbsp;·&nbsp; Expires: <strong>${data.expiresAt || 'PERMANENT'}</strong></small>
           <div class="key-display" onclick="copyText('${data.key}')" title="Click to copy">${data.key}</div>
-          <span class="copy-hint">👆 Click the key to copy it to clipboard.</span>
+          <span class="copy-hint">👆 Click the key to copy it to clipboard. Send this UR1 key to customer.</span>
         `);
-        appendLog(deviceCode, edition, data.expiresAt || 'PERMANENT', data.key);
+        appendLog(deviceCode, edition, data.duration || (edition === 'trial' ? '6 Months' : 'Permanent'), data.expiresAt || 'PERMANENT', data.key, data.licenseId);
+        loadPersistentLog();
       }
     } catch (e) {
-      showResult('gen-result', `❌ Network error: ${e.message}`, true);
+      showResult('gen-result', `❌ Network error: ${e.message}`, 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = 'Generate Key';
+      btn.innerHTML = 'Generate License Key';
     }
   }
 
@@ -439,24 +547,73 @@
       if (data.valid) {
         showResult('val-result', `
           ✅ <strong>Valid key!</strong><br>
-          Edition: <strong>${data.edition}</strong> &nbsp;·&nbsp;
-          Expires: <strong>${data.expiresAt}</strong>
+          Edition: <strong>${data.edition.toUpperCase()}</strong> &nbsp;·&nbsp;
+          Expires: <strong>${data.expiresAt || 'PERMANENT'}</strong> &nbsp;·&nbsp;
+          Days Remaining: <strong>${data.daysRemaining !== null ? data.daysRemaining + ' days' : 'Permanent'}</strong>
         `);
+      } else if (data.revoked) {
+        showResult('val-result', `
+          ⛔ <strong>REVOKED WITH IMMEDIATE EFFECT:</strong> ${data.error}
+        `, 'error');
       } else {
-        showResult('val-result', `❌ Invalid key: ${data.error || 'Signature mismatch'}`, true);
+        showResult('val-result', `❌ Invalid key: ${data.error || 'Signature or duration mismatch'}`, 'error');
       }
     } catch (e) {
-      showResult('val-result', `❌ Network error: ${e.message}`, true);
+      showResult('val-result', `❌ Network error: ${e.message}`, 'error');
     }
   }
 
-  // ──────────────── Version JSON ─────────────────────
+  // ──────────────── Stop Trial Immediately ───────────
+  async function stopTrialImmediately(overrideDeviceCode = null) {
+    const deviceCode = (overrideDeviceCode || document.getElementById('revoke-device').value).trim();
+    const reason = document.getElementById('revoke-reason').value.trim() || 'Trial stopped with immediate effect by administrator';
+
+    if (!deviceCode) {
+      alert('Please enter a Device Code to stop.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to stop the trial for device "${deviceCode}" with IMMEDIATE EFFECT?`)) {
+      return;
+    }
+
+    const btn = document.getElementById('revoke-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Halting trial…';
+
+    try {
+      const res = await fetch(`${API_BASE}/revoke-license`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceCode, reason }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        showResult('revoke-result', `❌ Failed to stop trial: ${data.error || res.statusText}`, 'error');
+      } else {
+        showResult('revoke-result', `
+          <strong style="color:var(--red)">⛔ Trial Halted With Immediate Effect!</strong><br>
+          Device <code>${deviceCode}</code> has been revoked at <strong>${data.revokedAt}</strong>.<br>
+          The remote kill-switch has updated the server blocklist and live feed.
+        `);
+        loadPersistentLog();
+      }
+    } catch (e) {
+      showResult('revoke-result', `❌ Network error: ${e.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '⛔ Stop Trial With Immediate Effect';
+    }
+  }
+
+  // ──────────────── Publish & Send App Update ─────────
   function buildVersionJsonObject() {
     const changelog = document.getElementById('v-changelog').value
       .split('\n').map(s => s.trim()).filter(Boolean);
     return {
       version: document.getElementById('v-version').value.trim(),
-      buildNumber: parseInt(document.getElementById('v-build').value) || 0,
+      buildNumber: parseInt(document.getElementById('v-build').value, 10) || 0,
       releaseDate: document.getElementById('v-date').value || new Date().toISOString().slice(0, 10),
       changelog,
       downloads: {
@@ -467,11 +624,48 @@
     };
   }
 
+  async function sendAndPublishUpdate() {
+    const updateObj = buildVersionJsonObject();
+    if (!updateObj.version || updateObj.buildNumber <= 0) {
+      alert('Version and positive build number are required.');
+      return;
+    }
+
+    const btn = document.getElementById('pub-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Publishing update…';
+
+    try {
+      const res = await fetch(`${API_BASE}/publish-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateObj),
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        showResult('version-result', `❌ Failed to publish update: ${data.error || res.statusText}`, 'error');
+      } else {
+        showResult('version-result', `
+          <strong style="color:var(--teal)">✅ App update successfully published live!</strong><br>
+          Version <strong>${data.update.version}</strong> (Build <strong>${data.update.buildNumber}</strong>) is now being served.<br>
+          <small>Feed URL: <a href="/updates/version.json" target="_blank"><code>/updates/version.json</code></a> · Polled by all customer apps on launch.</small>
+        `);
+        document.getElementById('live-version-badge').textContent = `Live: v${data.update.version} (b${data.update.buildNumber})`;
+      }
+    } catch (e) {
+      showResult('version-result', `❌ Network error: ${e.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Save &amp; Publish Live Update';
+    }
+  }
+
   function buildVersionJson() {
     const obj = buildVersionJsonObject();
     const json = JSON.stringify(obj, null, 2);
     showResult('version-result', `
-      <strong>version.json preview</strong> — save this to <code>public/updates/version.json</code> and deploy:
+      <strong>version.json preview:</strong>
       <div class="key-display" onclick="copyText(\`${json.replace(/`/g, "'")}\`)" style="white-space:pre;font-size:0.75rem">${json}</div>
       <span class="copy-hint">👆 Click to copy JSON.</span>
     `);
@@ -482,16 +676,43 @@
     copyText(JSON.stringify(obj, null, 2));
   }
 
-  // ──────────────── Issue Log ─────────────────────────
+  async function loadCurrentUpdateFeed() {
+    try {
+      const res = await fetch('/updates/version.json');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.version) {
+        document.getElementById('v-version').value = data.version;
+        document.getElementById('v-build').value = data.buildNumber || 52;
+        if (data.releaseDate) document.getElementById('v-date').value = data.releaseDate;
+        if (Array.isArray(data.changelog)) {
+          document.getElementById('v-changelog').value = data.changelog.join('\n');
+        }
+        if (data.downloads) {
+          if (data.downloads.macos) document.getElementById('v-mac').value = data.downloads.macos;
+          if (data.downloads.windows) document.getElementById('v-win').value = data.downloads.windows;
+          if (data.downloads.android) document.getElementById('v-android').value = data.downloads.android;
+        }
+        document.getElementById('live-version-badge').textContent = `Live: v${data.version} (b${data.buildNumber})`;
+      }
+    } catch (e) {
+      document.getElementById('live-version-badge').textContent = 'Live feed active';
+    }
+  }
+
+  // ──────────────── Issue Log & Revocations ──────────
   let _log = JSON.parse(localStorage.getItem('keyLog') || '[]');
 
-  function appendLog(deviceId, edition, expires, key) {
+  function appendLog(deviceId, edition, duration, expires, key, licenseId = null) {
     const entry = {
       date: new Date().toISOString().slice(0, 19).replace('T', ' '),
       deviceId,
       edition,
+      duration,
       expires,
       keyPreview: key.slice(0, 24) + '…',
+      licenseId,
+      status: 'Active',
     };
     _log.unshift(entry);
     localStorage.setItem('keyLog', JSON.stringify(_log.slice(0, 200)));
@@ -500,30 +721,48 @@
 
   function renderLog() {
     const tbody = document.getElementById('log-body');
-    if (_log.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No keys generated yet.</td></tr>';
+    if (!_log || _log.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">No licence keys generated yet.</td></tr>';
       return;
     }
-    tbody.innerHTML = _log.map(e => `
-      <tr>
-        <td>${e.date}</td>
-        <td style="font-family:monospace;font-size:0.78rem">${e.deviceId}</td>
-        <td><span class="badge badge-${e.edition}">${e.edition}</span></td>
-        <td>${e.expires}</td>
-        <td style="font-family:monospace;font-size:0.76rem">${e.keyPreview}</td>
-      </tr>`).join('');
+    tbody.innerHTML = _log.map(e => {
+      const dev = e.deviceId || e.deviceCode || '—';
+      const isRevoked = e.status === 'Revoked';
+      const rowClass = isRevoked ? 'class="is-revoked"' : '';
+      return `
+        <tr ${rowClass}>
+          <td>${e.date}</td>
+          <td style="font-family:monospace;font-size:0.78rem"><strong>${dev}</strong></td>
+          <td><span class="badge badge-${e.edition}">${e.edition}</span></td>
+          <td>${e.duration || (e.edition === 'trial' ? '6 Months' : 'Permanent')}</td>
+          <td>${e.expires || e.expiresAt || 'PERMANENT'}</td>
+          <td><span class="badge badge-${isRevoked ? 'revoked' : 'active'}">${e.status || 'Active'}</span></td>
+          <td style="font-family:monospace;font-size:0.76rem">${e.keyPreview}</td>
+          <td>
+            ${!isRevoked ? `<button class="btn btn-danger-outline btn-small" onclick="stopTrialImmediately('${dev}')" title="Stop trial immediately">⛔ Stop</button>` : '<span style="color:var(--red);font-size:0.76rem;font-weight:bold;">Revoked</span>'}
+          </td>
+        </tr>`;
+    }).join('');
   }
 
   function clearLog() {
-    if (!confirm('Clear the local key log?')) return;
+    if (!confirm('Clear the local key log cache?')) return;
     _log = [];
     localStorage.removeItem('keyLog');
     renderLog();
   }
 
   function exportLog() {
-    const rows = [['Date', 'Device ID', 'Edition', 'Expires', 'Key Preview']];
-    _log.forEach(e => rows.push([e.date, e.deviceId, e.edition, e.expires, e.keyPreview]));
+    const rows = [['Date', 'Device ID', 'Edition', 'Duration', 'Expires', 'Status', 'Key Preview']];
+    _log.forEach(e => rows.push([
+      e.date,
+      e.deviceId || e.deviceCode,
+      e.edition,
+      e.duration || (e.edition === 'trial' ? '6 Months' : 'Permanent'),
+      e.expires || e.expiresAt,
+      e.status || 'Active',
+      e.keyPreview
+    ]));
     const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -531,11 +770,29 @@
     a.click();
   }
 
+  // Load persistent log from Netlify Blobs
+  async function loadPersistentLog() {
+    try {
+      const res = await fetch(`${API_BASE}/get-license-log`);
+      if (!res.ok) throw new Error('Failed to fetch log');
+      const data = await res.json();
+      if (data.log && Array.isArray(data.log)) {
+        _log = data.log;
+        renderLog();
+      }
+    } catch (e) {
+      renderLog();
+    }
+  }
+
   // ──────────────── Init ─────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     // Set default release date to today
     document.getElementById('v-date').value = new Date().toISOString().slice(0, 10);
-    renderLog();
+
+    toggleDurationOptions();
+    loadCurrentUpdateFeed();
+    loadPersistentLog();
   });
 </script>
 </body>

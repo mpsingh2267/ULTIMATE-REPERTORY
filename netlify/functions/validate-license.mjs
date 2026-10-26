@@ -15,7 +15,7 @@
  *   SOmyfK3o7JHhEF7vOPNvpAdyJxen7vfUY8BEv/YTUZo=
  */
 
-import * as ed from '@noble/ed25519';
+import crypto from 'crypto';
 
 // base64 (standard, with padding) → Uint8Array
 const b64ToBytes = (s) => {
@@ -28,6 +28,17 @@ const b64ToBytes = (s) => {
 // Ed25519 public key (same as embedded in Flutter app)
 const PUBLIC_KEY_B64 = 'SOmyfK3o7JHhEF7vOPNvpAdyJxen7vfUY8BEv/YTUZo=';
 const publicKey = b64ToBytes(PUBLIC_KEY_B64);
+
+async function verifyEd25519(sigBytes, msgBytes, pubKeyBytes) {
+  try {
+    const ed = await import('@noble/ed25519');
+    return await ed.verifyAsync(sigBytes, msgBytes, pubKeyBytes);
+  } catch {
+    const spki = Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), Buffer.from(pubKeyBytes)]);
+    const pubKey = crypto.createPublicKey({ key: spki, format: 'der', type: 'spki' });
+    return crypto.verify(null, msgBytes, pubKey, Buffer.from(sigBytes));
+  }
+}
 
 export const handler = async (event) => {
   const cors = {
@@ -98,7 +109,7 @@ export const handler = async (event) => {
   const msgBytes = new TextEncoder().encode(payloadB64);
   let valid = false;
   try {
-    valid = await ed.verifyAsync(sigBytes, msgBytes, publicKey);
+    valid = await verifyEd25519(sigBytes, msgBytes, publicKey);
   } catch {
     valid = false;
   }
@@ -118,6 +129,34 @@ export const handler = async (event) => {
       headers: cors,
       body: JSON.stringify({ valid: false, error: 'Key belongs to a different device' }),
     };
+  }
+
+  // Check if device code or license ID has been revoked by admin
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    const store = getStore('license-keys');
+    const revokedData = await store.get('revocations.json');
+    if (revokedData) {
+      const revocations = JSON.parse(revokedData);
+      const isRevoked = revocations.some(
+        (r) =>
+          (r.deviceCode && r.deviceCode.toUpperCase() === deviceCode.toUpperCase()) ||
+          (r.licenseId && payloadJson.licenseId && r.licenseId === payloadJson.licenseId)
+      );
+      if (isRevoked) {
+        return {
+          statusCode: 200,
+          headers: cors,
+          body: JSON.stringify({
+            valid: false,
+            revoked: true,
+            error: 'This licence has been revoked by the administrator with immediate effect.',
+          }),
+        };
+      }
+    }
+  } catch {
+    // Blobs may not be configured in offline dev mode
   }
 
   // Check expiry for trial
@@ -143,7 +182,9 @@ export const handler = async (event) => {
       };
     }
     const durationMs = expiresAt.getTime() - issuedAt.getTime();
-    if (durationMs <= 0 || durationMs > 10 * 86400000 + 60000) {
+    // Allow up to 185 days (~6 months) plus buffer
+    const maxAllowedDurationMs = 185 * 86400000 + 86400000;
+    if (durationMs <= 0 || durationMs > maxAllowedDurationMs) {
       return {
         statusCode: 200,
         headers: cors,

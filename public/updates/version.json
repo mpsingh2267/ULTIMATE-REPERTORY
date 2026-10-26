@@ -1,17 +1,17 @@
 {
-  "version": "2.5.1",
-  "buildNumber": 51,
-  "releaseDate": "2026-08-29",
+  "version": "2.5.2",
+  "buildNumber": 52,
+  "releaseDate": "2026-10-26",
   "changelog": [
-    "Auto-update system linked to this portal",
-    "Persistent highlight and bold modes in Materia Medica",
-    "Patient case search and document attachments",
-    "Trial / Full licence management with in-app upgrade dialog",
-    "Windows & Android build support",
-    "License status badge in app toolbar"
+    "No login needed",
+    "Direct operation"
   ],
   "downloads": {
-    "macos": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.1-10-Day-Trial-Universal-Mac.pkg",
-    "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.1-10-Day-Trial-Android-Tablet-Universal.apk"
-  }
+    "macos": "https://test/mac.pkg",
+    "windows": "",
+    "android": ""
+  },
+  "revokedDevices": [],
+  "revokedLicenses": [],
+  "publishedAt": "2026-10-26T07:43:39.892Z"
 }

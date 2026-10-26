@@ -7,19 +7,26 @@
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
 
 [[headers]]
   for = "/updates/version.json"
   [headers.values]
-    Cache-Control = "no-cache, no-store"
+    Cache-Control = "no-cache, no-store, must-revalidate"
     Access-Control-Allow-Origin = "*"
 
 [[headers]]
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Methods = "GET, POST, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type"
+
+[[redirects]]
+  from   = "/updates/version.json"
+  to     = "/.netlify/functions/get-version"
+  status = 200
+  force  = true
 
 [[redirects]]
   from   = "/api/*"
