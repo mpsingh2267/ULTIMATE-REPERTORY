@@ -46,6 +46,7 @@ async function runAllDiagnostics() {
   const publishMod = await import('../netlify/functions/publish-update.mjs');
   const getVersionMod = await import('../netlify/functions/get-version.mjs');
   const getLogMod = await import('../netlify/functions/get-license-log.mjs');
+  const ghHelperMod = await import('../netlify/functions/github-release-helper.mjs');
 
   it('All Netlify functions export a default handler', () => {
     assert.strictEqual(typeof generateMod.default, 'function', 'generate-license must export default');
@@ -54,6 +55,14 @@ async function runAllDiagnostics() {
     assert.strictEqual(typeof publishMod.default, 'function', 'publish-update must export default');
     assert.strictEqual(typeof getVersionMod.default, 'function', 'get-version must export default');
     assert.strictEqual(typeof getLogMod.default, 'function', 'get-license-log must export default');
+    assert.strictEqual(typeof ghHelperMod.default, 'function', 'github-release-helper must export default');
+  });
+
+  await it('github-release-helper GET endpoint returns repo configuration', async () => {
+    const res = await ghHelperMod.default({ httpMethod: 'GET' });
+    assert.strictEqual(res.statusCode, 200);
+    const data = JSON.parse(res.body);
+    assert.strictEqual(data.repo, 'mpsingh2267/ULTIMATE-REPERTORY');
   });
 
   // 2. License Generation Tests
