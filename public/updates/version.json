@@ -1,42 +1,40 @@
 {
-  "version": "2.16.20",
-  "buildNumber": 180,
+  "version": "2.16.18",
+  "buildNumber": 178,
   "edition": "trial",
   "releaseDate": "2026-10-26",
   "changelog": [
-    "✨ 6-month trial support with immediate revocation",
-    "🚀 Streamlined update delivery for Apple Silicon and all platforms",
-    "🔒 Zero login required for portal administration"
+    "6-month trial support with immediate revocation",
+    "Streamlined update delivery for Apple Silicon"
   ],
   "downloads": {
     "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
-    "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
-    "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk",
     "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
-    "windows_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
-    "android_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk"
+    "windows": "",
+    "windows_trial": "",
+    "android": "",
+    "android_trial": ""
   },
   "editions": {
     "trial": {
-      "version": "2.16.20",
-      "buildNumber": 180,
+      "version": "2.16.18",
+      "buildNumber": 178,
       "releaseDate": "2026-10-26",
       "changelog": [
-        "✨ 6-month trial support with immediate revocation",
-        "🚀 Streamlined update delivery for Apple Silicon and all platforms",
-        "🔒 Zero login required for portal administration"
+        "6-month trial support with immediate revocation",
+        "Streamlined update delivery for Apple Silicon"
       ],
       "downloads": {
         "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
-        "windows": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
-        "android": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk",
         "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
-        "windows_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Windows-Setup.exe",
-        "android_trial": "https://ultimate-repertory.netlify.app/releases/Ultimate-Repertory-2.5.2-Trial-Android-Tablet-Universal.apk"
+        "windows": "",
+        "windows_trial": "",
+        "android": "",
+        "android_trial": ""
       }
     }
   },
   "revokedDevices": [],
   "revokedLicenses": [],
-  "publishedAt": "2026-10-26T16:06:20.239Z"
+  "publishedAt": "2026-11-07T09:05:00.000Z"
 }

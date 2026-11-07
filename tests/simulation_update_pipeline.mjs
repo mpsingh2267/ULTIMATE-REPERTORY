@@ -1,5 +1,10 @@
 import assert from 'assert';
 import path from 'path';
+import { promises as fs } from 'fs';
+
+// Snapshot the production feed so the end-to-end scenario cannot overwrite it
+const feedPath = path.resolve('public/updates/version.json');
+const originalFeed = await fs.readFile(feedPath, 'utf8').catch(() => null);
 
 console.log('🚀 Running Comprehensive Update Pipeline Simulation (Site -> Netlify Free -> Flutter App)...\n');
 
@@ -332,7 +337,12 @@ async function runSimulations() {
   console.log(`\n🎉 All ${passed}/${total} Comprehensive Simulations Succeeded 100%!\n`);
 }
 
-runSimulations().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+runSimulations()
+  .catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    // Restore the production feed file that publish-update overwrote during Scenario 8
+    if (originalFeed !== null) await fs.writeFile(feedPath, originalFeed, 'utf8');
+  });
