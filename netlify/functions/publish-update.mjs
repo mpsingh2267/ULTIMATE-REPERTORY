@@ -21,17 +21,11 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { connectBlobs, getBlobsStore } from '../lib/blobs.mjs';
 
-async function getBlobsStore(name) {
-  try {
-    const { getStore } = await import('@netlify/blobs');
-    return getStore(name);
-  } catch {
-    return null;
-  }
-}
 
 export const handler = async (event) => {
+  connectBlobs(event);
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -139,9 +133,11 @@ export const handler = async (event) => {
     };
 
     // Store in Netlify Blobs if available
+    let savedToBlobs = false;
     if (store) {
       try {
         await store.set('version.json', JSON.stringify(versionFeed, null, 2));
+        savedToBlobs = true;
       } catch (blobErr) {
         console.error('Failed to set in Blobs:', blobErr);
       }
@@ -150,6 +146,7 @@ export const handler = async (event) => {
     // Attempt to commit directly to GitHub repository if token is available
     const token = (body.token || process.env.GITHUB_TOKEN || '').trim();
     const repo = (body.repo || process.env.GITHUB_REPO || 'mpsingh2267/ULTIMATE-REPERTORY').trim();
+    let githubStatus = 'skipped (no GitHub token)';
     if (token) {
       try {
         const ghPath = 'public/updates/version.json';
@@ -167,7 +164,7 @@ export const handler = async (event) => {
           sha = ghFile.sha;
         }
         const b64Content = Buffer.from(JSON.stringify(versionFeed, null, 2)).toString('base64');
-        await fetch(ghUrl, {
+        const putRes = await fetch(ghUrl, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -181,9 +178,27 @@ export const handler = async (event) => {
             sha: sha || undefined,
           }),
         });
+        if (putRes.ok) {
+          githubStatus = 'committed';
+        } else {
+          const errJson = await putRes.json().catch(() => ({}));
+          githubStatus = `failed (${putRes.status}: ${errJson.message || putRes.statusText})`;
+          console.error('GitHub commit failed:', githubStatus);
+        }
       } catch (ghErr) {
+        githubStatus = `failed (${ghErr.message})`;
         console.error('Failed to commit version.json to GitHub:', ghErr);
       }
+    }
+
+    if (!savedToBlobs && githubStatus !== 'committed') {
+      return {
+        statusCode: 500,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          error: `Update was not saved anywhere. Blobs: ${store ? 'write failed' : 'unavailable'}; GitHub: ${githubStatus}`,
+        }),
+      };
     }
 
     // Also attempt local filesystem update for local dev or static deployment
@@ -201,6 +216,7 @@ export const handler = async (event) => {
         success: true,
         message: `App update ${version} (Build ${buildNumber}) published successfully!`,
         update: versionFeed,
+        storage: { blobs: savedToBlobs ? 'saved' : 'failed', github: githubStatus },
       }),
     };
   } catch (err) {
@@ -213,4 +229,3 @@ export const handler = async (event) => {
   }
 };
 
-export default handler;

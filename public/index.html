@@ -272,6 +272,7 @@
       <label for="trial-duration">Trial Duration</label>
       <select id="trial-duration" onchange="onTrialDurationChange()">
         <option value="10d">10 Days (Standard Evaluation)</option>
+        <option value="1m">1 Month / 30 Days</option>
         <option value="6m" selected>6 Months / 180 Days (Extended Trial)</option>
         <option value="custom">Custom Duration in Days…</option>
       </select>
@@ -548,6 +549,8 @@
       customGroup.style.display = 'none';
       if (dur === '6m') {
         preview.textContent = 'Estimated Expiry: 6 Months (180 days) from activation';
+      } else if (dur === '1m') {
+        preview.textContent = 'Estimated Expiry: 1 Month (30 days) from activation';
       } else {
         preview.textContent = 'Estimated Expiry: 10 Days from activation';
       }
@@ -753,63 +756,8 @@
     btn.innerHTML = '<span class="spinner"></span> Publishing update…';
 
     try {
-      // 1. Commit directly to GitHub repository public/updates/version.json if token is present
-      if (token) {
-        try {
-          const ghPath = 'public/updates/version.json';
-          const ghUrl = `https://api.github.com/repos/${repo}/contents/${ghPath}`;
-          let sha = null;
-          const getRes = await fetch(ghUrl, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-            },
-          });
-          if (getRes.status === 200) {
-            const data = await getRes.json();
-            sha = data.sha;
-          }
-          const contentToSave = {
-            ...updateObj,
-            edition: 'trial',
-            downloads: {
-              ...updateObj.downloads,
-              macos_trial: updateObj.downloads.macos_trial || updateObj.downloads.macos,
-              windows_trial: updateObj.downloads.windows_trial || updateObj.downloads.windows,
-              android_trial: updateObj.downloads.android_trial || updateObj.downloads.android,
-            },
-            editions: {
-              trial: {
-                ...updateObj,
-                downloads: {
-                  ...updateObj.downloads,
-                  macos_trial: updateObj.downloads.macos_trial || updateObj.downloads.macos,
-                },
-              },
-            },
-            revokedDevices: [],
-            revokedLicenses: [],
-            publishedAt: new Date().toISOString(),
-          };
-          const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(contentToSave, null, 2))));
-          await fetch(ghUrl, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: `Publish live update v${updateObj.version} (Build ${updateObj.buildNumber})`,
-              content: b64,
-              sha: sha || undefined,
-            }),
-          });
-        } catch (e) {
-          console.error('Direct GitHub commit failed:', e);
-        }
-      }
-
+      // The server function saves to Netlify Blobs and (if a token is set) commits to GitHub,
+      // preserving revocations. Do not commit from the browser too — it races the server commit.
       // 2. Call Netlify function publish-update
       const res = await fetch(`${API_BASE}/publish-update`, {
         method: 'POST',
@@ -824,6 +772,7 @@
         showResult('version-result', `
           <strong style="color:var(--teal)">✅ App update successfully published live!</strong><br>
           Version <strong>${data.update.version}</strong> (Build <strong>${data.update.buildNumber}</strong>) is now being served.<br>
+          <small>Netlify Blobs: ${data.storage?.blobs ?? 'n/a'} · GitHub: ${data.storage?.github ?? 'n/a'}</small><br>
           <small>Feed URL: <a href="/updates/version.json" target="_blank"><code>/updates/version.json</code></a> · Polled by all customer apps on launch.</small>
         `);
         document.getElementById('live-version-badge').textContent = `Live: v${data.update.version} (b${data.update.buildNumber})`;

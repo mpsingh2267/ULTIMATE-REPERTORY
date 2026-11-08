@@ -5,6 +5,7 @@ This owner-only Netlify project generates Ed25519-signed licence keys, issues 10
 ## Licence & Trial rules
 
 - **10-day Trial keys**: Device-bound evaluation keys valid for 10 days.
+- **1-month Trial keys**: Device-bound evaluation keys valid for 30 days.
 - **6-month Trial keys**: Device-bound extended evaluation keys valid for 180 days (~6 calendar months).
 - **Custom duration Trial keys**: Device-bound evaluation keys with custom expiration days.
 - **Full keys**: Device-bound permanent keys that do not expire.
@@ -66,7 +67,7 @@ Content-Type: application/json
   "trialDuration": "6m"
 }
 ```
-*`trialDuration` options*: `"10d"` (10 days), `"6m"` (180 days / 6 months), or positive number of days (e.g. `180`).
+*`trialDuration` options*: `"10d"` (10 days), `"1m"` (30 days / 1 month), `"6m"` (180 days / 6 months), or positive number of days (e.g. `180`).
 *`edition` options*: `"trial"`, `"full"`.
 
 ### 2. Validate Key & Check Revocation Status

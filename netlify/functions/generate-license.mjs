@@ -6,7 +6,7 @@
  *   {
  *     "deviceCode": "AABBCC-DDEEFF-112233-445566",  // 4×6 hex groups from the app
  *     "edition": "trial" | "full",
- *     "trialDuration": "10d" | "6m" | "180d" | number (days) // for trial edition
+ *     "trialDuration": "10d" | "1m" | "6m" | "180d" | number (days) // for trial edition
  *   }
  *
  * Returns:
@@ -23,15 +23,8 @@
  */
 
 import crypto from 'crypto';
+import { connectBlobs, getBlobsStore } from '../lib/blobs.mjs';
 
-async function getBlobsStore(name) {
-  try {
-    const { getStore } = await import('@netlify/blobs');
-    return getStore(name);
-  } catch {
-    return null;
-  }
-}
 
 const hex2bytes = (hex) =>
   Uint8Array.from(hex.match(/.{1,2}/g).map((b) => parseInt(b, 16)));
@@ -56,6 +49,7 @@ async function signEd25519(msgBytes, seedBytes) {
 }
 
 export const handler = async (event) => {
+  connectBlobs(event);
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -98,7 +92,10 @@ export const handler = async (event) => {
   let durationLabel = '10 Days';
 
   if (edition === 'trial') {
-    if (rawDuration === '6m' || rawDuration === '6months' || rawDuration === '180' || rawDuration === '180d') {
+    if (rawDuration === '1m' || rawDuration === '1month' || rawDuration === '30' || rawDuration === '30d') {
+      expiryDays = 30;
+      durationLabel = '1 Month';
+    } else if (rawDuration === '6m' || rawDuration === '6months' || rawDuration === '180' || rawDuration === '180d') {
       expiryDays = 180;
       durationLabel = '6 Months';
     } else {
@@ -187,4 +184,3 @@ export const handler = async (event) => {
   };
 };
 
-export default handler;

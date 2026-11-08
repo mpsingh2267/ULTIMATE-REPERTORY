@@ -18,15 +18,8 @@
 import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { connectBlobs, getBlobsStore } from '../lib/blobs.mjs';
 
-async function getBlobsStore(name) {
-  try {
-    const { getStore } = await import('@netlify/blobs');
-    return getStore(name);
-  } catch {
-    return null;
-  }
-}
 
 // base64 (standard, with padding) → Uint8Array
 const b64ToBytes = (s) => {
@@ -52,6 +45,7 @@ async function verifyEd25519(sigBytes, msgBytes, pubKeyBytes) {
 }
 
 export const handler = async (event) => {
+  connectBlobs(event);
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -256,4 +250,3 @@ export const handler = async (event) => {
   };
 };
 
-export default handler;

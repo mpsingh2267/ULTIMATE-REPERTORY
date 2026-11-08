@@ -139,4 +139,3 @@ export const handler = async (event) => {
   }
 };
 
-export default handler;

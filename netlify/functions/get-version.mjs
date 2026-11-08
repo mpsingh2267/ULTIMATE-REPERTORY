@@ -13,17 +13,11 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { connectBlobs, getBlobsStore } from '../lib/blobs.mjs';
 
-async function getBlobsStore(name) {
-  try {
-    const { getStore } = await import('@netlify/blobs');
-    return getStore(name);
-  } catch {
-    return null;
-  }
-}
 
 export const handler = async (event) => {
+  connectBlobs(event);
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -38,30 +32,33 @@ export const handler = async (event) => {
   let versionObj = null;
   const repo = process.env.GITHUB_REPO || 'mpsingh2267/ULTIMATE-REPERTORY';
 
-  // 1. Fetch live version.json from GitHub raw content (always fresh and persistent)
+  // 1. Read both persistent sources and serve whichever was published most recently.
+  //    (Blobs is written on every publish; GitHub only when a token is configured.)
+  let ghObj = null;
+  let blobObj = null;
   try {
     const rawUrl = `https://raw.githubusercontent.com/${repo}/main/public/updates/version.json?_t=${Date.now()}`;
     const rawRes = await fetch(rawUrl, {
       headers: { 'Cache-Control': 'no-cache', 'User-Agent': 'Ultimate-Repertory-Portal' },
     });
-    if (rawRes.ok) {
-      versionObj = await rawRes.json();
+    if (rawRes.ok) ghObj = await rawRes.json();
+  } catch {}
+
+  try {
+    const store = await getBlobsStore('updates');
+    if (store) {
+      const blobVersion = await store.get('version.json');
+      if (blobVersion) blobObj = JSON.parse(blobVersion);
     }
-  } catch {
-    // Continue to next source
+  } catch (err) {
+    console.error('Blobs read failed:', err.message);
   }
 
-  // 2. Check Netlify Blobs 'updates' store if available
-  if (!versionObj) {
-    try {
-      const store = await getBlobsStore('updates');
-      if (store) {
-        const blobVersion = await store.get('version.json');
-        if (blobVersion) {
-          versionObj = JSON.parse(blobVersion);
-        }
-      }
-    } catch {}
+  const ts = (o) => (o && o.publishedAt ? Date.parse(o.publishedAt) || 0 : 0);
+  if (blobObj && ghObj) {
+    versionObj = ts(blobObj) >= ts(ghObj) ? blobObj : ghObj;
+  } else {
+    versionObj = blobObj || ghObj;
   }
 
   // 3. Fall back to reading local public/updates/version.json bundled in lambda
@@ -177,4 +174,3 @@ export const handler = async (event) => {
   };
 };
 
-export default handler;

@@ -8,13 +8,16 @@ importers:
 
   .:
     dependencies:
+      '@netlify/blobs':
+        specifier: ^8.1.0
+        version: 8.1.1
       '@noble/ed25519':
         specifier: ^2.1.0
         version: 2.3.0
     devDependencies:
       netlify-cli:
         specifier: ^18.0.0
-        version: 18.1.0(@types/node@26.4.0)(picomatch@4.0.7)(supports-color@9.4.0)
+        version: 18.1.0(@types/node@26.4.0)(picomatch@4.0.7)
 
 packages:
 
@@ -5940,11 +5943,11 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
-  body-parser@1.20.3(supports-color@9.4.0):
+  body-parser@1.20.3:
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
-      debug: 2.6.9(supports-color@9.4.0)
+      debug: 2.6.9
       depd: 2.0.0
       destroy: 1.2.0
       http-errors: 2.0.0
@@ -6346,11 +6349,9 @@ snapshots:
       es-errors: 1.3.0
       is-data-view: 1.0.2
 
-  debug@2.6.9(supports-color@9.4.0):
+  debug@2.6.9:
     dependencies:
       ms: 2.0.0
-    optionalDependencies:
-      supports-color: 9.4.0
 
   debug@4.4.0(supports-color@9.4.0):
     dependencies:
@@ -6785,21 +6786,21 @@ snapshots:
     dependencies:
       on-headers: 1.1.0
 
-  express@4.21.2(supports-color@9.4.0):
+  express@4.21.2:
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
-      body-parser: 1.20.3(supports-color@9.4.0)
+      body-parser: 1.20.3
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 0.7.1
       cookie-signature: 1.0.6
-      debug: 2.6.9(supports-color@9.4.0)
+      debug: 2.6.9
       depd: 2.0.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 1.3.1(supports-color@9.4.0)
+      finalhandler: 1.3.1
       fresh: 0.5.2
       http-errors: 2.0.0
       merge-descriptors: 1.0.3
@@ -6811,8 +6812,8 @@ snapshots:
       qs: 6.13.0
       range-parser: 1.2.1
       safe-buffer: 5.2.1
-      send: 0.19.0(supports-color@9.4.0)
-      serve-static: 1.16.2(supports-color@9.4.0)
+      send: 0.19.0
+      serve-static: 1.16.2
       setprototypeof: 1.2.0
       statuses: 2.0.1
       type-is: 1.6.18
@@ -6836,7 +6837,7 @@ snapshots:
       iconv-lite: 0.4.24
       tmp: 0.0.33
 
-  extract-zip@2.0.1(supports-color@9.4.0):
+  extract-zip@2.0.1:
     dependencies:
       debug: 4.4.0(supports-color@9.4.0)
       get-stream: 5.2.0
@@ -6970,9 +6971,9 @@ snapshots:
 
   filter-obj@5.1.0: {}
 
-  finalhandler@1.3.1(supports-color@9.4.0):
+  finalhandler@1.3.1:
     dependencies:
-      debug: 2.6.9(supports-color@9.4.0)
+      debug: 2.6.9
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -7012,7 +7013,7 @@ snapshots:
     dependencies:
       from2: 2.3.0
 
-  follow-redirects@1.16.0(debug@4.4.0(supports-color@9.4.0)):
+  follow-redirects@1.16.0(debug@4.4.0):
     optionalDependencies:
       debug: 4.4.0(supports-color@9.4.0)
 
@@ -7302,20 +7303,20 @@ snapshots:
       statuses: 2.0.1
       toidentifier: 1.0.1
 
-  http-proxy-middleware@2.0.7(debug@4.4.0(supports-color@9.4.0)):
+  http-proxy-middleware@2.0.7(debug@4.4.0):
     dependencies:
       '@types/http-proxy': 1.17.17
-      http-proxy: 1.18.1(debug@4.4.0(supports-color@9.4.0))
+      http-proxy: 1.18.1(debug@4.4.0)
       is-glob: 4.0.3
       is-plain-obj: 3.0.0
       micromatch: 4.0.8
     transitivePeerDependencies:
       - debug
 
-  http-proxy@1.18.1(debug@4.4.0(supports-color@9.4.0)):
+  http-proxy@1.18.1(debug@4.4.0):
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.16.0(debug@4.4.0(supports-color@9.4.0))
+      follow-redirects: 1.16.0(debug@4.4.0)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -7334,7 +7335,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6(supports-color@9.4.0):
+  https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.0(supports-color@9.4.0)
@@ -8031,7 +8032,7 @@ snapshots:
 
   nested-error-stacks@2.1.1: {}
 
-  netlify-cli@18.1.0(@types/node@26.4.0)(picomatch@4.0.7)(supports-color@9.4.0):
+  netlify-cli@18.1.0(@types/node@26.4.0)(picomatch@4.0.7):
     dependencies:
       '@bugsnag/js': 8.2.0
       '@fastify/static': 7.0.4
@@ -8071,9 +8072,9 @@ snapshots:
       envinfo: 7.14.0
       etag: 1.8.1
       execa: 5.1.1
-      express: 4.21.2(supports-color@9.4.0)
+      express: 4.21.2
       express-logging: 1.1.1
-      extract-zip: 2.0.1(supports-color@9.4.0)
+      extract-zip: 2.0.1
       fastest-levenshtein: 1.0.16
       fastify: 4.29.0
       find-up: 7.0.0
@@ -8085,9 +8086,9 @@ snapshots:
       gh-release-fetch: 4.0.3
       git-repo-info: 2.1.1
       gitconfiglocal: 2.1.0
-      http-proxy: 1.18.1(debug@4.4.0(supports-color@9.4.0))
-      http-proxy-middleware: 2.0.7(debug@4.4.0(supports-color@9.4.0))
-      https-proxy-agent: 7.0.6(supports-color@9.4.0)
+      http-proxy: 1.18.1(debug@4.4.0)
+      http-proxy-middleware: 2.0.7(debug@4.4.0)
+      https-proxy-agent: 7.0.6
       inquirer: 8.0.0
       inquirer-autocomplete-prompt: 1.4.0(inquirer@8.0.0)
       ipx: 2.1.0(@netlify/blobs@8.1.1)
@@ -8124,7 +8125,7 @@ snapshots:
       semver: 7.7.1
       source-map-support: 0.5.21
       strip-ansi-control-characters: 2.0.0
-      tabtab: 3.0.2(supports-color@9.4.0)
+      tabtab: 3.0.2
       tempy: 3.1.0
       terminal-link: 3.0.0
       through2-filter: 4.0.0
@@ -8135,7 +8136,7 @@ snapshots:
       unixify: 1.0.0
       update-notifier: 7.3.1
       uuid: 11.0.5
-      wait-port: 1.1.0(supports-color@9.4.0)
+      wait-port: 1.1.0
       write-file-atomic: 5.0.1
       ws: 8.18.0
       zod: 3.24.1
@@ -8871,9 +8872,9 @@ snapshots:
 
   semver@7.7.1: {}
 
-  send@0.19.0(supports-color@9.4.0):
+  send@0.19.0:
     dependencies:
-      debug: 2.6.9(supports-color@9.4.0)
+      debug: 2.6.9
       depd: 2.0.0
       destroy: 1.2.0
       encodeurl: 1.0.2
@@ -8889,12 +8890,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serve-static@1.16.2(supports-color@9.4.0):
+  serve-static@1.16.2:
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 0.19.0(supports-color@9.4.0)
+      send: 0.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -9195,7 +9196,7 @@ snapshots:
       picocolors: 1.1.1
       sax: 1.6.1
 
-  tabtab@3.0.2(supports-color@9.4.0):
+  tabtab@3.0.2:
     dependencies:
       debug: 4.4.0(supports-color@9.4.0)
       es6-promisify: 6.1.1
@@ -9518,7 +9519,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  wait-port@1.1.0(supports-color@9.4.0):
+  wait-port@1.1.0:
     dependencies:
       chalk: 4.1.2
       commander: 9.5.0

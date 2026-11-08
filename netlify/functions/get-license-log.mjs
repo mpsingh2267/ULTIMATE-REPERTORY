@@ -6,16 +6,11 @@
  * Returns the persistent license key log from Netlify Blobs.
  */
 
-async function getBlobsStore(name) {
-  try {
-    const { getStore } = await import('@netlify/blobs');
-    return getStore(name);
-  } catch {
-    return null;
-  }
-}
+import { connectBlobs, getBlobsStore } from '../lib/blobs.mjs';
+
 
 export const handler = async (event) => {
+  connectBlobs(event);
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -83,4 +78,3 @@ export const handler = async (event) => {
   }
 };
 
-export default handler;
