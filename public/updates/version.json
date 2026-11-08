@@ -1,40 +1,38 @@
 {
-  "version": "2.16.18",
-  "buildNumber": 178,
+  "version": "2.16.27",
+  "buildNumber": 187,
   "edition": "trial",
-  "releaseDate": "2026-10-26",
+  "releaseDate": "2026-11-08",
   "changelog": [
-    "6-month trial support with immediate revocation",
-    "Streamlined update delivery for Apple Silicon"
+    "Bug fixes and improvements"
   ],
   "downloads": {
-    "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
-    "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
+    "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/2.16.27/Ultimate-Repertory-Trial-2.16.27-Apple-Silicon.pkg",
     "windows": "",
-    "windows_trial": "",
     "android": "",
+    "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/2.16.27/Ultimate-Repertory-Trial-2.16.27-Apple-Silicon.pkg",
+    "windows_trial": "",
     "android_trial": ""
   },
   "editions": {
     "trial": {
-      "version": "2.16.18",
-      "buildNumber": 178,
-      "releaseDate": "2026-10-26",
+      "version": "2.16.27",
+      "buildNumber": 187,
+      "releaseDate": "2026-11-08",
       "changelog": [
-        "6-month trial support with immediate revocation",
-        "Streamlined update delivery for Apple Silicon"
+        "Bug fixes and improvements"
       ],
       "downloads": {
-        "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
-        "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/v2.16.18/Ultimate-Repertory-Trial-2.16.18-Apple-Silicon.pkg",
+        "macos": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/2.16.27/Ultimate-Repertory-Trial-2.16.27-Apple-Silicon.pkg",
         "windows": "",
-        "windows_trial": "",
         "android": "",
+        "macos_trial": "https://github.com/mpsingh2267/ULTIMATE-REPERTORY/releases/download/2.16.27/Ultimate-Repertory-Trial-2.16.27-Apple-Silicon.pkg",
+        "windows_trial": "",
         "android_trial": ""
       }
     }
   },
   "revokedDevices": [],
   "revokedLicenses": [],
-  "publishedAt": "2026-11-07T09:05:00.000Z"
+  "publishedAt": "2026-11-08T12:00:33.887Z"
 }
